@@ -152,6 +152,9 @@ importers:
 
   e2e:
     devDependencies:
+      '@presscraft/auth':
+        specifier: workspace:*
+        version: link:../packages/auth
       '@presscraft/server':
         specifier: workspace:*
         version: link:../apps/server

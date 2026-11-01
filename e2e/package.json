@@ -7,6 +7,7 @@
     "test": "vitest run --no-file-parallelism"
   },
   "devDependencies": {
+    "@presscraft/auth": "workspace:*",
     "@presscraft/server": "workspace:*",
     "@presscraft/web": "workspace:*",
     "@types/node": "^22.5.0",

@@ -1,11 +1,15 @@
+import { generateTotp } from "@presscraft/auth";
 import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 /**
- * End-to-End-Smoke-Test für Meilenstein 1 (ADR 0015, Schritt 9):
- * Login → Seite anlegen → Block hinzufügen → veröffentlichen → öffentliche
- * URL prüft Inhalt.
+ * End-to-End-Smoke-Test:
+ * - Meilenstein 1 (ADR 0015, Schritt 9): Login → Seite anlegen → Block
+ *   hinzufügen → veröffentlichen → öffentliche URL prüft Inhalt.
+ * - Userverwaltung (ADR 0017, Schritt 8): 2FA-Enrollment → zweistufiger
+ *   Login (Passwort, dann TOTP-Code) → geschützter Endpunkt vor Abschluss
+ *   gesperrt → falscher Code abgelehnt → richtiger Code schließt den Login ab.
  *
  * Startet apps/server und apps/web (Astro-Preview, also den bereits
  * gebauten Stand) selbst als Child-Prozesse, auf separaten Ports, damit ein
@@ -16,7 +20,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
  * @presscraft/server und @presscraft/web stehen nur als devDependencies in
  * package.json, damit Turborepo die richtige Build-Reihenfolge kennt —
  * dieser Test importiert ihren Code nicht, sondern startet ihre gebauten
- * Artefakte als eigenständige Prozesse.
+ * Artefakte als eigenständige Prozesse. @presscraft/auth ist die einzige
+ * Ausnahme: generateTotp() ist eine reine Funktion ohne DB-/Nest-Anbindung,
+ * genau das, was auch eine echte Authenticator-App offline berechnet — kein
+ * Zugriff auf Server-internen Zustand.
  */
 
 const ROOT = path.resolve(import.meta.dirname, "..");
@@ -127,5 +134,92 @@ describe("Meilenstein 1 Smoke-Test", () => {
       method: "DELETE",
       headers: { Cookie: sessionCookie },
     });
+  });
+
+  it("2FA-Login: Enroll → Login erfordert Code → falscher Code 401 → richtiger Code 200", async () => {
+    const adminLoginResponse = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "admin@presscraft.local", password: "presscraft-dev" }),
+    });
+    expect(adminLoginResponse.status).toBe(200);
+    const adminCookie = adminLoginResponse.headers.get("set-cookie")!.split(";")[0];
+
+    const email = `e2e-2fa-${Date.now()}@example.com`;
+    const password = "e2e-test-password";
+    const createUserResponse = await fetch(`${API_BASE_URL}/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: adminCookie },
+      body: JSON.stringify({ email, password }),
+    });
+    expect(createUserResponse.ok).toBe(true);
+    const createdUser = (await createUserResponse.json()) as { id: string };
+
+    try {
+      const firstLoginResponse = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      expect(firstLoginResponse.status).toBe(200);
+      expect((await firstLoginResponse.json()).requiresTwoFactor).toBe(false);
+      const userCookie = firstLoginResponse.headers.get("set-cookie")!.split(";")[0];
+
+      const enrollResponse = await fetch(`${API_BASE_URL}/me/2fa/enroll`, {
+        method: "POST",
+        headers: { Cookie: userCookie },
+      });
+      expect(enrollResponse.ok).toBe(true);
+      const { secret } = (await enrollResponse.json()) as { secret: string };
+
+      const confirmResponse = await fetch(`${API_BASE_URL}/me/2fa/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: userCookie },
+        body: JSON.stringify({ code: generateTotp(secret) }),
+      });
+      expect(confirmResponse.ok).toBe(true);
+
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: "POST",
+        headers: { Cookie: userCookie },
+      });
+
+      const secondLoginResponse = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      expect(secondLoginResponse.status).toBe(200);
+      expect((await secondLoginResponse.json()).requiresTwoFactor).toBe(true);
+      const pendingCookie = secondLoginResponse.headers.get("set-cookie")!.split(";")[0];
+
+      const blockedResponse = await fetch(`${API_BASE_URL}/me`, {
+        headers: { Cookie: pendingCookie },
+      });
+      expect(blockedResponse.status).toBe(401);
+
+      const wrongCodeResponse = await fetch(`${API_BASE_URL}/auth/login/2fa`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: pendingCookie },
+        body: JSON.stringify({ code: "000000" }),
+      });
+      expect(wrongCodeResponse.status).toBe(401);
+
+      const correctCodeResponse = await fetch(`${API_BASE_URL}/auth/login/2fa`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: pendingCookie },
+        body: JSON.stringify({ code: generateTotp(secret) }),
+      });
+      expect(correctCodeResponse.status).toBe(200);
+
+      const meResponse = await fetch(`${API_BASE_URL}/me`, { headers: { Cookie: pendingCookie } });
+      expect(meResponse.status).toBe(200);
+      expect((await meResponse.json()).email).toBe(email);
+    } finally {
+      await fetch(`${API_BASE_URL}/users/${createdUser.id}`, {
+        method: "DELETE",
+        headers: { Cookie: adminCookie },
+      });
+    }
   });
 });
