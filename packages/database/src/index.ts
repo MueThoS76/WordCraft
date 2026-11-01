@@ -1,1 +1,2 @@
-export const PACKAGE_NAME = "@presscraft/database";
+export * from "./schema/index.js";
+export * from "./client.js";
