@@ -9,6 +9,8 @@ import {
   Param,
   Patch,
   Post,
+  Req,
+  UseGuards,
 } from "@nestjs/common";
 import {
   createContentItem,
@@ -21,11 +23,13 @@ import {
 } from "@presscraft/content";
 import type { Database } from "@presscraft/database";
 import { z, ZodError } from "zod";
-import { SYSTEM_USER_ID } from "../bootstrap/bootstrap.service.js";
+import type { AuthenticatedRequest } from "../auth/session.guard.js";
+import { SessionGuard } from "../auth/session.guard.js";
 import { DATABASE_CONNECTION } from "../database/database.module.js";
 import { createContentItemSchema, updateContentItemSchema } from "./content-item.dto.js";
 
 @Controller("content/:typeId")
+@UseGuards(SessionGuard)
 export class ContentItemsController {
   constructor(@Inject(DATABASE_CONNECTION) private readonly db: Database) {}
 
@@ -35,13 +39,15 @@ export class ContentItemsController {
   }
 
   @Post()
-  create(@Param("typeId") typeId: string, @Body() body: unknown) {
+  create(
+    @Param("typeId") typeId: string,
+    @Body() body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
     const input = this.parse(createContentItemSchema, body);
-    // TODO: authorId kommt in Implementierungsschritt 7 aus dem eingeloggten
-    // User, nicht mehr aus SYSTEM_USER_ID.
     return createContentItem(this.db, {
       contentTypeId: typeId,
-      authorId: SYSTEM_USER_ID,
+      authorId: request.userId,
       ...input,
     });
   }
@@ -72,8 +78,8 @@ export class ContentItemsController {
   }
 
   @Post(":id/publish")
-  async publish(@Param("id") id: string) {
-    const item = await publishContentItem(this.db, id, SYSTEM_USER_ID);
+  async publish(@Param("id") id: string, @Req() request: AuthenticatedRequest) {
+    const item = await publishContentItem(this.db, id, request.userId);
     if (!item) {
       throw new NotFoundException("Content-Item nicht gefunden.");
     }

@@ -1,15 +1,8 @@
 import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { eq, users, type Database } from "@presscraft/database";
+import { createUser, getUserByEmail } from "@presscraft/auth";
 import { ensureContentType, PAGE_CONTENT_TYPE } from "@presscraft/content";
+import type { Database } from "@presscraft/database";
 import { DATABASE_CONNECTION } from "../database/database.module.js";
-
-/**
- * Fester Platzhalter-User, dem Content-Items zugeordnet werden, solange es
- * noch keine echte Authentifizierung gibt (Implementierungsschritt 7).
- * TODO: entfernen, sobald eingeloggte User existieren — authorId kommt dann
- * aus der Session statt aus dieser Konstante.
- */
-export const SYSTEM_USER_ID = "00000000-0000-0000-0000-000000000001";
 
 @Injectable()
 export class BootstrapService implements OnModuleInit {
@@ -19,22 +12,31 @@ export class BootstrapService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     await ensureContentType(this.db, PAGE_CONTENT_TYPE);
-    await this.ensureSystemUser();
-    this.logger.log("Bootstrap abgeschlossen (Content-Typ 'page', System-User).");
+    await this.ensureAdminUser();
+    this.logger.log("Bootstrap abgeschlossen (Content-Typ 'page', Admin-Account).");
   }
 
-  private async ensureSystemUser(): Promise<void> {
-    const existing = await this.db.select().from(users).where(eq(users.id, SYSTEM_USER_ID));
-    if (existing.length > 0) {
+  /**
+   * Legt einen ersten Admin-Account an, falls noch keiner existiert.
+   *
+   * ACHTUNG: Das ist ein pragmatischer Platzhalter für Meilenstein 1, kein
+   * echter Einrichtungsassistent (der ist Vision, siehe
+   * docs/vision/feature-roadmap.md). Passwort kommt aus ADMIN_PASSWORD oder
+   * einem unsicheren Dev-Default — vor echtem Einsatz ändern.
+   */
+  private async ensureAdminUser(): Promise<void> {
+    const email = process.env.ADMIN_EMAIL ?? "admin@presscraft.local";
+    const existing = await getUserByEmail(this.db, email);
+    if (existing) {
       return;
     }
 
-    await this.db.insert(users).values({
-      id: SYSTEM_USER_ID,
-      email: "system@presscraft.local",
-      // Kein echter Hash — dieser Account kann sich nicht einloggen, es gibt
-      // noch keinen Login-Endpunkt (Schritt 7).
-      passwordHash: "disabled",
-    });
+    const password = process.env.ADMIN_PASSWORD ?? "presscraft-dev";
+    await createUser(this.db, { email, password });
+    this.logger.warn(
+      `Admin-Account "${email}" wurde mit einem Dev-Default-Passwort angelegt. ` +
+        "Vor produktivem Einsatz über ADMIN_PASSWORD ein echtes Passwort setzen " +
+        "oder (sobald vorhanden) den Einrichtungsassistenten nutzen.",
+    );
   }
 }
