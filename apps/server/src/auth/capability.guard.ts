@@ -29,7 +29,11 @@ export const RequireCapability = (capabilityId: string) =>
 export class CapabilityGuard implements CanActivate {
   constructor(
     @Inject(DATABASE_CONNECTION) private readonly db: Database,
-    private readonly reflector: Reflector,
+    // Explizit statt nur über den TS-Typ: esbuild (tsx watch im Dev-Modus)
+    // emittiert für Konstruktorparameter nicht zuverlässig die
+    // Decorator-Metadaten, auf die Nest sich sonst für die Typauflösung
+    // verlassen würde — mit tsc (Build, e2e-Tests, Self-Host) fiel das nie auf.
+    @Inject(Reflector) private readonly reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
