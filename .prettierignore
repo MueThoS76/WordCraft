@@ -1,4 +1,7 @@
 dist
 .turbo
+.astro
 node_modules
 pnpm-lock.yaml
+# Noch kein prettier-plugin-astro installiert.
+*.astro

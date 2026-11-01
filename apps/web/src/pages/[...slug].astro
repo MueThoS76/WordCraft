@@ -1,0 +1,39 @@
+---
+import type { BlockDocument } from "@presscraft/blocks";
+import { BlockDocumentRenderer } from "@presscraft/renderer";
+
+interface PublishedContentItem {
+  title: string;
+  publishedBlockBody: BlockDocument | null;
+}
+
+const { slug } = Astro.params;
+const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:3000/api/v1";
+
+const response = await fetch(`${apiBaseUrl}/public/content/page/${slug}`);
+
+if (!response.ok) {
+  Astro.response.status = 404;
+}
+
+const item: PublishedContentItem | null = response.ok ? await response.json() : null;
+---
+
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>{item ? item.title : "Seite nicht gefunden"}</title>
+  </head>
+  <body>
+    {
+      item ? (
+        <>
+          <h1>{item.title}</h1>
+          {item.publishedBlockBody && <BlockDocumentRenderer document={item.publishedBlockBody} />}
+        </>
+      ) : (
+        <p>Seite nicht gefunden.</p>
+      )
+    }
+  </body>
+</html>

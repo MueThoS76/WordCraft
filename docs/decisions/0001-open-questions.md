@@ -21,7 +21,8 @@
 - **Monorepo-Struktur & Paket-Abhängigkeitsregeln:** siehe [0012-monorepo-struktur.md](0012-monorepo-struktur.md).
 - **Minimales Datenmodell** (Users/Groups, Content-Typen, Plugins/Themes, Session-Auth statt JWT): siehe [0013-minimales-datenmodell.md](0013-minimales-datenmodell.md).
 - **API-Verträge** (Block-Dokument-Format, REST-API, Contracts-Pakete, Astro On-Demand-Rendering): siehe [0014-api-vertraege.md](0014-api-vertraege.md).
-- **Implementierungsplan Meilenstein 1** (10 Schritte, noch nicht gestartet): siehe [0015-implementierungsplan-meilenstein-1.md](0015-implementierungsplan-meilenstein-1.md).
+- **Implementierungsplan Meilenstein 1** (10 Schritte): siehe [0015-implementierungsplan-meilenstein-1.md](0015-implementierungsplan-meilenstein-1.md) — Schritte 1–5 umgesetzt.
+- **KI-/MCP-Zugänglichkeit als API-first-Prinzip:** jede Admin-Funktionalität muss vollständig per API nutzbar sein, keine UI-only-Logik — siehe [0016-ki-mcp-zugaenglichkeit.md](0016-ki-mcp-zugaenglichkeit.md).
 
 ## Vorläufig (angenommen, aber noch zu bestätigen)
 
@@ -50,6 +51,7 @@ Rust wurde als Alternative zu TypeScript untersucht, aber für v1 verworfen (Beg
 - CMS-Core darf nicht direkt von einem bestimmten Theme oder Editor abhängen.
 - Editor und öffentliche Website teilen sich einen gemeinsamen Komponenten-/Rendering-Vertrag.
 - Architekturentscheidungen sollen künftig als ADRs in diesem Ordner dokumentiert werden (Prinzip 8 aus dem Brief).
+- Jede Admin-Funktionalität muss vollständig per API nutzbar sein, nicht nur über das UI — damit das CMS auch von KI-Agenten (MCP o. ä.) bedienbar ist (ADR 0016).
 
 ## Nächste Schritte
 
@@ -62,4 +64,4 @@ Brief Abschnitt 12 ist jetzt vollständig bearbeitet:
 5. ~~API-Verträge zwischen Backend, Editor und Renderer entwerfen.~~ ✅ [0014](0014-api-vertraege.md)
 6. ~~Schrittweisen Implementierungsplan für Meilenstein 1 erstellen.~~ ✅ [0015](0015-implementierungsplan-meilenstein-1.md)
 
-**Noch kein Code, kein `package.json`, kein tatsächliches Monorepo-Setup.** Die Umsetzung von [0015](0015-implementierungsplan-meilenstein-1.md) beginnt erst nach expliziter Freigabe (Brief Abschnitt 12: "Warte anschließend auf Freigabe, bevor größere Änderungen vorgenommen werden").
+Die Umsetzung von [0015](0015-implementierungsplan-meilenstein-1.md) läuft: Monorepo, Datenbank, `packages/blocks`, `apps/server`-Grundgerüst und die Content-API (Schritte 1–5) sind fertig und verifiziert. Weiter geht's mit Schritt 6 (`packages/renderer` + `apps/web`).

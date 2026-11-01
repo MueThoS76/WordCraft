@@ -3,13 +3,24 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "build": "astro build",
+    "typecheck": "astro check",
+    "dev": "astro dev"
+  },
+  "dependencies": {
+    "@astrojs/node": "^8.3.4",
+    "@astrojs/react": "^3.6.2",
+    "@presscraft/blocks": "workspace:*",
+    "@presscraft/renderer": "workspace:*",
+    "astro": "^4.15.9",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.3",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
     "typescript": "^5.6.0"
   }
 }

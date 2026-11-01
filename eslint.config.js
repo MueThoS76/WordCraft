@@ -4,7 +4,14 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["**/dist/**", "**/.turbo/**", "**/node_modules/**"],
+    ignores: [
+      "**/dist/**",
+      "**/.turbo/**",
+      "**/node_modules/**",
+      "**/.astro/**",
+      // Von Astro generiert, fester Inhalt (Triple-Slash-Referenz) — nicht unser Code.
+      "apps/web/src/env.d.ts",
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
