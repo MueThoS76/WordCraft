@@ -1,0 +1,31 @@
+# 0015 — Schrittweiser Implementierungsplan für Meilenstein 1
+
+**Status:** Entschieden (2026-11-01) — **Umsetzung beginnt erst nach Freigabe** (Brief Abschnitt 12: "Warte anschließend auf Freigabe, bevor größere Änderungen vorgenommen werden").
+
+## Kontext
+
+Letzter Punkt aus Brief Abschnitt 12. Ziel laut Brief Abschnitt 11: eine Seite erstellen, speichern, öffentlich darstellen — mit Monorepo, startfähigem Backend, DB-Anbindung, Admin-UI, einfachem Content-Modell, API, einfachem Block-Editor, öffentlicher HTML-Ausgabe, grundlegenden Tests. **Ausdrücklich nicht** Teil von Meilenstein 1: Marketplace, vollständiges Plugin-System, komplexe Theme-Verwaltung, Shop, umfangreiche Benutzerverwaltung — obwohl die Architektur dafür in den ADRs 0005–0013 bereits vorbereitet ist (Gruppen/Capabilities/2FA/Plugin-Isolation/Theme-Editor kommen alle _später_, nicht in diesem Durchgang).
+
+## Entscheidung: die Schritte
+
+Jeder Schritt ist einzeln überprüfbar (Brief-Prinzip 10), baut auf dem vorherigen auf:
+
+1. ~~**Monorepo-Grundgerüst**~~ ✅ — pnpm-Workspace + Turborepo, leere Pakete gemäß [0012](0012-monorepo-struktur.md) (nur `package.json`/`tsconfig`, noch keine Logik), Root-Lint/Format/CI-Skeleton. _Verifikation:_ `pnpm install && pnpm turbo run build` läuft durch (No-Op). **Erledigt:** `pnpm build`, `typecheck`, `lint`, `format:check` und `lint:boundaries` (dependency-cruiser nach [0012](0012-monorepo-struktur.md)) laufen alle grün; Git-Repo initialisiert, noch kein Commit.
+2. **Datenbank** — `packages/database`: Drizzle-Schema für `users`, `content_types`, `content_items` aus [0013](0013-minimales-datenmodell.md) (Rest der Tabellen kann als Schema existieren, bleibt aber ungenutzt), Migrations-Tooling, lokales Postgres via Docker Compose. _Verifikation:_ Migration läuft gegen lokalen Container.
+3. **`packages/blocks`** — `BlockDocument`/`BlockNode`-Schema (Zod) aus [0014](0014-api-vertraege.md) + 2–3 Basis-Block-Typen (Absatz, Überschrift, Bild), nur Attribute-Schema, noch kein UI. _Verifikation:_ Unit-Tests validieren Beispiel-Dokumente.
+4. **`apps/server`-Grundgerüst** — NestJS mit Fastify-Adapter ([0004](0004-backend-framework.md)), DB-Verbindung, ein Health-Check-Endpunkt. _Verifikation:_ `GET /api/v1/health` antwortet 200 gegen laufende DB.
+5. **Content-API (minimal, noch ohne Auth)** — ein hartkodierter Content-Typ "page", CRUD + Publish-Endpunkte aus [0014](0014-api-vertraege.md). Auth kommt bewusst erst in Schritt 7 — bis dahin offen und klar als Übergangszustand markiert. _Verifikation:_ Integrationstests legen eine Seite an, lesen, veröffentlichen sie, prüfen DB-Zustand.
+6. **`packages/renderer` + `apps/web`-Grundgerüst** — Render-Komponente pro Block-Typ aus Schritt 3, Astro-App im On-Demand-Modus ([0014](0014-api-vertraege.md)), dynamische Route ruft die öffentliche Content-API auf. _Verifikation:_ Aufruf einer bekannten Slug-URL im Astro-Dev-Server zeigt die zuvor angelegte Seite als HTML.
+7. **Auth (minimal)** — `packages/auth`: `users`-Tabelle, Passwort-Hashing, Session-Cookie-Login ([0013](0013-minimales-datenmodell.md)). **Kein** Gruppen-/Capability-/2FA-System in diesem Schritt (das ist Vision, nicht Meilenstein 1) — nur: eingeloggt oder nicht, schließt die in Schritt 5 offene Lücke. _Verifikation:_ Redaktions-Endpunkte lehnen unauthentifizierte Requests ab; Login setzt ein gültiges Session-Cookie.
+8. **`apps/admin`-Grundgerüst + einfacher Block-Editor** — React-App, Login-Screen, Seiten-Liste, minimaler Editor mit den Block-Typen aus Schritt 3 (Reihenfolge ändern reicht zum Start, volles `dnd-kit` kann nachgezogen werden), Autosave (debounced PATCH), "Veröffentlichen"-Button. _Verifikation:_ Manuell im Admin eine Seite anlegen, veröffentlichen, live auf `apps/web` sehen.
+9. **Grundlegende automatisierte Tests konsolidieren** — Unit-Tests (Block-Schema), Integrationstests (Content-API), ein End-to-End-Smoke-Test (Login → Seite anlegen → Block hinzufügen → veröffentlichen → öffentliche URL prüft Inhalt). Erfüllt explizit die Meilenstein-1-Anforderung "Grundlegende automatisierte Tests".
+10. **Docker Compose fürs Self-Hosting** — Server + Web + Postgres (Admin kann als statischer Build hinter dem Server mitlaufen) verdrahtet in einem Compose-File. Bewusst letzter Schritt, weil es nur das bereits funktionierende Meilenstein-1-Ergebnis verpackt, keine neue Funktionalität ist.
+
+## Explizit ausgeklammert (gehört zur Vision, nicht zu diesem Durchgang)
+
+Marketplace, volles Plugin-System mit Prozess-Isolation, Theme-Online-Editor, Gruppen/Capabilities/2FA, Content-Revisions-Browsing-UI, Custom-Content-Typen jenseits von "Page", Update-Check-Dashboard. Die Architektur (ADRs 0005–0013) ist dafür vorbereitet, die Umsetzung kommt nach Meilenstein 1 in eigenen, separat freizugebenden Schritten.
+
+## Konsequenzen
+
+- Dies ist der "erste konkrete Implementierungsschritt" im Sinne von Brief Abschnitt 12 — die eigentliche Umsetzung (Schritt 1 ff.) beginnt erst nach expliziter Freigabe, nicht automatisch mit dieser Dokumentation.
+- Damit sind alle fünf Punkte aus Brief Abschnitt 12 bearbeitet.
