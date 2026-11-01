@@ -1,1 +1,2 @@
-export const PACKAGE_NAME = "@presscraft/content";
+export * from "./content-types.js";
+export * from "./content-items.js";
