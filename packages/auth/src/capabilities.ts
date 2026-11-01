@@ -37,6 +37,10 @@ export async function ensureCapability(db: Database, definition: CapabilityDefin
   return created;
 }
 
+export function listCapabilities(db: Database) {
+  return db.select().from(capabilities);
+}
+
 /** Prüft, ob der User über eine seiner Gruppen die gegebene Capability hat. */
 export async function userHasCapability(
   db: Database,
