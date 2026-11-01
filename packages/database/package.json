@@ -13,6 +13,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@presscraft/blocks": "workspace:*",
     "drizzle-orm": "^0.45.4",
     "postgres": "^3.4.4"
   },

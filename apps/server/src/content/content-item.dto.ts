@@ -1,3 +1,4 @@
+import { blockDocumentSchema } from "@presscraft/blocks";
 import { z } from "zod";
 
 export const createContentItemSchema = z.object({
@@ -9,7 +10,9 @@ export type CreateContentItemDto = z.infer<typeof createContentItemSchema>;
 export const updateContentItemSchema = z.object({
   title: z.string().min(1).optional(),
   slug: z.string().min(1).optional(),
-  blockBody: z.record(z.unknown()).optional(),
+  // Strukturell validiert (ADR 0014) — nicht beliebiges JSON. Verhindert
+  // u. a., dass ein ungültiger blockBody den Renderer crashen lässt.
+  blockBody: blockDocumentSchema.optional(),
   fieldValues: z.record(z.unknown()).optional(),
 });
 export type UpdateContentItemDto = z.infer<typeof updateContentItemSchema>;

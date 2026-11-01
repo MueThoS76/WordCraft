@@ -1,5 +1,8 @@
+import type { BlockDocument } from "@presscraft/blocks";
 import { jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { users } from "./auth.js";
+
+const EMPTY_BLOCK_DOCUMENT: BlockDocument = { schemaVersion: 1, blocks: [] };
 
 /**
  * Siehe docs/decisions/0013-minimales-datenmodell.md,
@@ -30,11 +33,11 @@ export const contentItems = pgTable(
     slug: text("slug").notNull(),
     status: contentStatusEnum("status").notNull().default("draft"),
     title: text("title").notNull(),
-    // Aktueller Entwurf. TODO: Typ auf BlockDocument aus @presscraft/blocks
-    // umstellen, sobald Implementierungsschritt 3 das Schema definiert.
-    blockBody: jsonb("block_body").$type<Record<string, unknown>>().notNull().default({}),
+    // Aktueller Entwurf. Default ist ein gültiges, leeres BlockDocument, nie
+    // "{}" — sonst crasht der Renderer beim ersten Rendern (siehe Bugfix).
+    blockBody: jsonb("block_body").$type<BlockDocument>().notNull().default(EMPTY_BLOCK_DOCUMENT),
     // Letzter veröffentlichter Stand — null, solange nie veröffentlicht (ADR 0009).
-    publishedBlockBody: jsonb("published_block_body").$type<Record<string, unknown>>(),
+    publishedBlockBody: jsonb("published_block_body").$type<BlockDocument | null>(),
     // Werte passend zum field_schema des Content-Typs (ADR 0008).
     fieldValues: jsonb("field_values").$type<Record<string, unknown>>().notNull().default({}),
     authorId: uuid("author_id")
@@ -54,7 +57,7 @@ export const contentRevisions = pgTable("content_revisions", {
   contentItemId: uuid("content_item_id")
     .notNull()
     .references(() => contentItems.id, { onDelete: "cascade" }),
-  blockBody: jsonb("block_body").$type<Record<string, unknown>>().notNull(),
+  blockBody: jsonb("block_body").$type<BlockDocument>().notNull(),
   fieldValues: jsonb("field_values").$type<Record<string, unknown>>().notNull(),
   statusAtSave: contentStatusEnum("status_at_save").notNull(),
   createdBy: uuid("created_by")

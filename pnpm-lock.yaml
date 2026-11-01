@@ -78,6 +78,9 @@ importers:
       '@presscraft/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@presscraft/blocks':
+        specifier: workspace:*
+        version: link:../../packages/blocks
       '@presscraft/content':
         specifier: workspace:*
         version: link:../../packages/content
@@ -175,6 +178,9 @@ importers:
 
   packages/content:
     dependencies:
+      '@presscraft/blocks':
+        specifier: workspace:*
+        version: link:../blocks
       '@presscraft/database':
         specifier: workspace:*
         version: link:../database
@@ -197,6 +203,9 @@ importers:
 
   packages/database:
     dependencies:
+      '@presscraft/blocks':
+        specifier: workspace:*
+        version: link:../blocks
       drizzle-orm:
         specifier: ^0.45.4
         version: 0.45.4(postgres@3.4.9)

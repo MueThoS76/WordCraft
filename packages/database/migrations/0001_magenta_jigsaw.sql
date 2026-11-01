@@ -1,0 +1,1 @@
+ALTER TABLE "content_items" ALTER COLUMN "block_body" SET DEFAULT '{"schemaVersion":1,"blocks":[]}'::jsonb;

@@ -1,4 +1,7 @@
+import type { BlockDocument } from "@presscraft/blocks";
 import { and, contentItems, contentRevisions, eq, type Database } from "@presscraft/database";
+
+const EMPTY_BLOCK_DOCUMENT: BlockDocument = { schemaVersion: 1, blocks: [] };
 
 /**
  * Framework-unabhängige Content-Item-Logik (ADR 0012: packages/content kennt
@@ -12,7 +15,7 @@ export interface CreateContentItemInput {
   slug: string;
   title: string;
   authorId: string;
-  blockBody?: Record<string, unknown>;
+  blockBody?: BlockDocument;
   fieldValues?: Record<string, unknown>;
 }
 
@@ -24,7 +27,7 @@ export async function createContentItem(db: Database, input: CreateContentItemIn
       slug: input.slug,
       title: input.title,
       authorId: input.authorId,
-      blockBody: input.blockBody ?? {},
+      blockBody: input.blockBody ?? EMPTY_BLOCK_DOCUMENT,
       fieldValues: input.fieldValues ?? {},
       status: "draft",
     })
@@ -44,7 +47,7 @@ export function listContentItems(db: Database, contentTypeId: string) {
 export interface UpdateContentItemInput {
   title?: string;
   slug?: string;
-  blockBody?: Record<string, unknown>;
+  blockBody?: BlockDocument;
   fieldValues?: Record<string, unknown>;
 }
 
