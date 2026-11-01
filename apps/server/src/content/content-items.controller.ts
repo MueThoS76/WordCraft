@@ -23,13 +23,16 @@ import {
 } from "@presscraft/content";
 import type { Database } from "@presscraft/database";
 import { z, ZodError } from "zod";
+import { CapabilityGuard, RequireCapability } from "../auth/capability.guard.js";
+import { CAPABILITY_CONTENT_MANAGE } from "../auth/core-capabilities.js";
 import type { AuthenticatedRequest } from "../auth/session.guard.js";
 import { SessionGuard } from "../auth/session.guard.js";
 import { DATABASE_CONNECTION } from "../database/database.module.js";
 import { createContentItemSchema, updateContentItemSchema } from "./content-item.dto.js";
 
 @Controller("content/:typeId")
-@UseGuards(SessionGuard)
+@UseGuards(SessionGuard, CapabilityGuard)
+@RequireCapability(CAPABILITY_CONTENT_MANAGE)
 export class ContentItemsController {
   constructor(@Inject(DATABASE_CONNECTION) private readonly db: Database) {}
 
