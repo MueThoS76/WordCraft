@@ -47,6 +47,12 @@ export async function getUserByEmail(db: Database, email: string) {
   return user;
 }
 
+/** Liefert den vollen Datensatz (inkl. totpSecret) — nur für den 2FA-Verifizierungsschritt gedacht. */
+export async function getFullUserById(db: Database, id: string) {
+  const [user] = await db.select().from(users).where(eq(users.id, id));
+  return user;
+}
+
 export function listUsers(db: Database) {
   return db
     .select()

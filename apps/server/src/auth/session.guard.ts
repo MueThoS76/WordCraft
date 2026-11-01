@@ -16,8 +16,8 @@ export interface AuthenticatedRequest extends FastifyRequest {
 }
 
 /**
- * Meilenstein 1: prüft nur "eingeloggt oder nicht" — kein Capability-Check
- * (ADR 0006 kommt erst mit dem vollen Rechtemodell, nicht in diesem Schritt).
+ * Prüft "eingeloggt" UND (ab ADR 0017, Schritt 6) "2FA-Schritt abgeschlossen,
+ * falls nötig" — kein Capability-Check hier, das übernimmt CapabilityGuard.
  */
 @Injectable()
 export class SessionGuard implements CanActivate {
@@ -33,6 +33,9 @@ export class SessionGuard implements CanActivate {
     const session = await getValidSession(this.db, sessionId);
     if (!session) {
       throw new UnauthorizedException("Session ungültig oder abgelaufen.");
+    }
+    if (!session.twoFactorVerified) {
+      throw new UnauthorizedException("Zwei-Faktor-Authentifizierung ausstehend.");
     }
 
     request.userId = session.userId;
