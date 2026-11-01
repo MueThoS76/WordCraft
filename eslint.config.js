@@ -9,8 +9,9 @@ export default tseslint.config(
       "**/.turbo/**",
       "**/node_modules/**",
       "**/.astro/**",
-      // Von Astro generiert, fester Inhalt (Triple-Slash-Referenz) — nicht unser Code.
+      // Von Astro bzw. Vite generiert, fester Inhalt (Triple-Slash-Referenz) — nicht unser Code.
       "apps/web/src/env.d.ts",
+      "apps/admin/src/vite-env.d.ts",
     ],
   },
   eslint.configs.recommended,

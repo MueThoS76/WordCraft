@@ -8,7 +8,7 @@
 
 - **Sprache:** TypeScript — bestätigt im Gespräch gegen Ruby on Rails und Elixir/Phoenix, siehe [0002-backend-sprache.md](0002-backend-sprache.md).
 - **Backend-Runtime:** Node.js — folgt direkt aus der Sprachentscheidung.
-- **Admin-Frontend:** React
+- **Admin-Frontend:** React, Build-Tool Vite (pragmatisch in Schritt 8 entschieden, konsistent mit dem Vite-basierten Astro-Stack).
 - **Rendering öffentliche Website:** Astro (+ React-Islands für interaktive Blocks) — siehe [0003-rendering-technologie.md](0003-rendering-technologie.md).
 - **Backend-Framework:** NestJS mit Fastify-Adapter — siehe [0004-backend-framework.md](0004-backend-framework.md).
 - **Plugin-Isolation:** Child-Prozess pro Plugin + Capability-Manifest — siehe [0005-plugin-isolation.md](0005-plugin-isolation.md).
@@ -21,7 +21,7 @@
 - **Monorepo-Struktur & Paket-Abhängigkeitsregeln:** siehe [0012-monorepo-struktur.md](0012-monorepo-struktur.md).
 - **Minimales Datenmodell** (Users/Groups, Content-Typen, Plugins/Themes, Session-Auth statt JWT): siehe [0013-minimales-datenmodell.md](0013-minimales-datenmodell.md).
 - **API-Verträge** (Block-Dokument-Format, REST-API, Contracts-Pakete, Astro On-Demand-Rendering): siehe [0014-api-vertraege.md](0014-api-vertraege.md).
-- **Implementierungsplan Meilenstein 1** (10 Schritte): siehe [0015-implementierungsplan-meilenstein-1.md](0015-implementierungsplan-meilenstein-1.md) — Schritte 1–5 umgesetzt.
+- **Implementierungsplan Meilenstein 1** (10 Schritte): siehe [0015-implementierungsplan-meilenstein-1.md](0015-implementierungsplan-meilenstein-1.md) — Schritte 1–8 umgesetzt.
 - **KI-/MCP-Zugänglichkeit als API-first-Prinzip:** jede Admin-Funktionalität muss vollständig per API nutzbar sein, keine UI-only-Logik — siehe [0016-ki-mcp-zugaenglichkeit.md](0016-ki-mcp-zugaenglichkeit.md).
 
 ## Vorläufig (angenommen, aber noch zu bestätigen)

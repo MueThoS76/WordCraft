@@ -1,0 +1,139 @@
+/* Bewusst minimal (ADR 0015, Schritt 8: "einfacher Editor") — Tailwind/
+   shadcn-ui bleiben vorerst "Vorgeschlagen" (0001-open-questions.md), bis
+   die Admin-UI über diesen Umfang hinauswächst. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #f7f7f8;
+  color: #1a1a1a;
+}
+
+main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+header,
+footer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+footer {
+  margin-top: 1rem;
+  border-top: 1px solid #ddd;
+  padding-top: 1rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+input,
+textarea,
+select {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.5rem;
+  font: inherit;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font: inherit;
+}
+
+button:hover {
+  background: #eee;
+}
+
+button.link {
+  border: none;
+  background: none;
+  text-decoration: underline;
+  padding: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.new-page-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.new-page-form input {
+  width: auto;
+  flex: 1;
+}
+
+.block-card {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: white;
+}
+
+.block-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.block-card-actions button {
+  padding: 0.2rem 0.5rem;
+}
+
+.add-block {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.heading-form,
+.image-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.heading-form select {
+  width: auto;
+}
+
+.error {
+  color: #b00020;
+}
+
+.save-state {
+  color: #666;
+  font-size: 0.9rem;
+}

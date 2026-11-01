@@ -14,6 +14,12 @@ try {
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
   await app.register(fastifyCookie);
+  // Cookie-basierte Session-Auth braucht CORS mit konkretem Origin statt "*"
+  // (Browser schicken Credentials bei Wildcard-Origin nicht mit).
+  app.enableCors({
+    origin: process.env.ADMIN_ORIGIN ?? "http://localhost:4322",
+    credentials: true,
+  });
   app.setGlobalPrefix("api/v1");
   app.useGlobalFilters(new HttpExceptionFilter());
   const port = Number(process.env.PORT ?? 3000);
