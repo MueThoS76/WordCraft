@@ -16,5 +16,42 @@ services:
       timeout: 5s
       retries: 10
 
+  # Self-Hosting-Setup (ADR 0015, Schritt 10): apps/admin läuft als
+  # statischer Build mit, kein eigener Container (siehe apps/server/src/main.ts).
+  server:
+    build:
+      context: ..
+      dockerfile: docker/server.Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
+        VITE_WEB_BASE_URL: ${WEB_PUBLIC_URL:-http://localhost:4321}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://presscraft:presscraft@postgres:5432/presscraft
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@presscraft.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-presscraft-dev}
+      # Browser-Origin, von dem aus Cookie-Requests ankommen — im
+      # Self-Hosting-Setup derselbe Origin wie der Server selbst, da
+      # apps/admin unter /admin mitläuft (ADR 0012/0014).
+      ADMIN_ORIGIN: ${SERVER_PUBLIC_URL:-http://localhost:3000}
+      PORT: "3000"
+    ports:
+      - "3000:3000"
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/web.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - server
+    environment:
+      API_BASE_URL: http://server:3000/api/v1
+    ports:
+      - "4321:4321"
+
 volumes:
   postgres-data:

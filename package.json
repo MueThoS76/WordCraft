@@ -15,11 +15,13 @@
     "lint:boundaries": "depcruise --config .dependency-cruiser.cjs apps packages",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "db:up": "docker compose -f docker/docker-compose.yml up -d",
-    "db:down": "docker compose -f docker/docker-compose.yml down",
+    "db:up": "docker compose -f docker/docker-compose.yml up -d postgres",
+    "db:down": "docker compose -f docker/docker-compose.yml stop postgres",
     "db:generate": "pnpm --filter @presscraft/database db:generate",
     "db:migrate": "pnpm --filter @presscraft/database db:migrate",
-    "db:studio": "pnpm --filter @presscraft/database db:studio"
+    "db:studio": "pnpm --filter @presscraft/database db:studio",
+    "selfhost:up": "docker compose -f docker/docker-compose.yml up -d --build",
+    "selfhost:down": "docker compose -f docker/docker-compose.yml down"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",

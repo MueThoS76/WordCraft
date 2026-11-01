@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
+    "build:selfhosted": "vite build --base=/admin/",
     "typecheck": "tsc --noEmit",
     "dev": "vite"
   },
