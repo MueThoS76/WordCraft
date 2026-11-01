@@ -15,15 +15,7 @@ function toBlockDocument(value: unknown): BlockDocument {
   return { schemaVersion: 1, blocks: [] };
 }
 
-export function PageEditorPage({
-  id,
-  onBack,
-  onLogout,
-}: {
-  id: string;
-  onBack: () => void;
-  onLogout: () => void;
-}) {
+export function PageEditorPage({ id, onBack }: { id: string; onBack: () => void }) {
   const [page, setPage] = useState<ContentItem | null>(null);
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -95,9 +87,6 @@ export function PageEditorPage({
         <span className="save-state">
           {saveState === "saving" ? "Speichert …" : saveState === "saved" ? "Gespeichert" : ""}
         </span>
-        <button type="button" onClick={onLogout}>
-          Abmelden
-        </button>
       </header>
 
       <label>

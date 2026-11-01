@@ -2,13 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { api } from "../api/client";
 import type { ContentItem } from "../api/types";
 
-export function PagesListPage({
-  onOpen,
-  onLogout,
-}: {
-  onOpen: (id: string) => void;
-  onLogout: () => void;
-}) {
+export function PagesListPage({ onOpen }: { onOpen: (id: string) => void }) {
   const [pages, setPages] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [newSlug, setNewSlug] = useState("");
@@ -44,12 +38,7 @@ export function PagesListPage({
 
   return (
     <main className="pages-list">
-      <header>
-        <h1>Seiten</h1>
-        <button type="button" onClick={onLogout}>
-          Abmelden
-        </button>
-      </header>
+      <h1>Seiten</h1>
 
       <form onSubmit={handleCreate} className="new-page-form">
         <input

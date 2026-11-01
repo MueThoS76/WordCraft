@@ -32,3 +32,38 @@ export interface ContentType {
   providedBy: string;
   fieldSchema: Record<string, unknown>;
 }
+
+export interface Me {
+  id: string;
+  email: string;
+  totpEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AppUser {
+  id: string;
+  email: string;
+  totpEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  require2fa: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GroupDetail extends Group {
+  capabilities: { capabilityId: string }[];
+  members: { id: string; email: string }[];
+}
+
+export interface Capability {
+  id: string;
+  providedBy: string;
+  description: string | null;
+}

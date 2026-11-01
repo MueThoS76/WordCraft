@@ -133,7 +133,71 @@ td {
   color: #b00020;
 }
 
+.hint {
+  color: #555;
+  font-size: 0.9rem;
+}
+
 .save-state {
   color: #666;
   font-size: 0.9rem;
+}
+
+.top-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid #ddd;
+}
+
+.top-nav .logout-button {
+  margin-left: auto;
+}
+
+.inline-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: normal;
+}
+
+.inline-checkbox input {
+  width: auto;
+  margin: 0;
+}
+
+.capability-list,
+.member-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.capability-list li,
+.member-list li {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.add-member {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-member select {
+  width: auto;
+  flex: 1;
+}
+
+.secret {
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.75rem;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  word-break: break-all;
+  white-space: pre-wrap;
 }
