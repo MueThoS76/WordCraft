@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Delete,
   Get,
@@ -29,6 +30,7 @@ import { z, ZodError } from "zod";
 import { CapabilityGuard, RequireCapability } from "../auth/capability.guard.js";
 import { CAPABILITY_USERS_MANAGE } from "../auth/core-capabilities.js";
 import { SessionGuard } from "../auth/session.guard.js";
+import { hasPgErrorCode } from "../common/pg-error.js";
 import { DATABASE_CONNECTION } from "../database/database.module.js";
 import {
   createGroupSchema,
@@ -49,9 +51,16 @@ export class GroupsController {
   }
 
   @Post()
-  create(@Body() body: unknown) {
+  async create(@Body() body: unknown) {
     const input = this.parse(createGroupSchema, body);
-    return createGroup(this.db, input);
+    try {
+      return await createGroup(this.db, input);
+    } catch (error) {
+      if (hasPgErrorCode(error, "23505")) {
+        throw new ConflictException("Gruppenname wird bereits verwendet.");
+      }
+      throw error;
+    }
   }
 
   @Get(":id")
@@ -70,7 +79,15 @@ export class GroupsController {
   @Patch(":id")
   async update(@Param("id") id: string, @Body() body: unknown) {
     const input = this.parse(updateGroupSchema, body);
-    const group = await updateGroup(this.db, id, input);
+    let group;
+    try {
+      group = await updateGroup(this.db, id, input);
+    } catch (error) {
+      if (hasPgErrorCode(error, "23505")) {
+        throw new ConflictException("Gruppenname wird bereits verwendet.");
+      }
+      throw error;
+    }
     if (!group) {
       throw new NotFoundException("Gruppe nicht gefunden.");
     }
