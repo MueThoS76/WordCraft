@@ -4,6 +4,7 @@ import type {
   Capability,
   Category,
   CategorySummary,
+  DashboardData,
   ContentItem,
   ContentType,
   Group,
@@ -67,6 +68,9 @@ export const api = {
   },
   logout() {
     return request<{ success: true }>("/auth/logout", { method: "POST" });
+  },
+  dashboard() {
+    return request<DashboardData>("/dashboard");
   },
   me() {
     return request<Me>("/me");

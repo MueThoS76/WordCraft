@@ -461,3 +461,56 @@ describe("Revisionen", () => {
     });
   });
 });
+
+describe("Dashboard", () => {
+  it("zeigt Admins Kennzahlen, Usern ohne Rechte nur den Systemstatus", async () => {
+    const adminLogin = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "admin@presscraft.local", password: "presscraft-dev" }),
+    });
+    const adminCookie = adminLogin.headers.get("set-cookie")!.split(";")[0];
+
+    const adminData = (await (
+      await fetch(`${API_BASE_URL}/dashboard`, { headers: { Cookie: adminCookie } })
+    ).json()) as {
+      system: { database: { ok: boolean } };
+      content: { byType: object } | null;
+      media: object | null;
+      users: object | null;
+    };
+    expect(adminData.system.database.ok).toBe(true);
+    expect(adminData.content).not.toBeNull();
+    expect(adminData.media).not.toBeNull();
+    expect(adminData.users).not.toBeNull();
+
+    const email = `e2e-dashboard-${Date.now()}@example.com`;
+    const password = "e2e-test-password";
+    const created = await fetch(`${API_BASE_URL}/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: adminCookie },
+      body: JSON.stringify({ email, password }),
+    });
+    const user = (await created.json()) as { id: string };
+    try {
+      const login = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const cookie = login.headers.get("set-cookie")!.split(";")[0];
+      const restricted = (await (
+        await fetch(`${API_BASE_URL}/dashboard`, { headers: { Cookie: cookie } })
+      ).json()) as { content: unknown; media: unknown; users: unknown };
+      expect(restricted).toMatchObject({ content: null, media: null, users: null });
+
+      const anonymous = await fetch(`${API_BASE_URL}/dashboard`);
+      expect(anonymous.status).toBe(401);
+    } finally {
+      await fetch(`${API_BASE_URL}/users/${user.id}`, {
+        method: "DELETE",
+        headers: { Cookie: adminCookie },
+      });
+    }
+  });
+});

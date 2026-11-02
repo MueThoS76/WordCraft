@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-do
 import { api } from "./api/client";
 import { AdminLayout } from "./layout/AdminLayout";
 import { AccountPage } from "./pages/AccountPage";
+import { DashboardPage } from "./pages/DashboardPage";
 import { CategoriesPage } from "./pages/CategoriesPage";
 import { ContentEditorPage } from "./pages/ContentEditorPage";
 import { ContentListPage } from "./pages/ContentListPage";
@@ -88,7 +89,8 @@ export function App() {
   return (
     <Routes>
       <Route element={<AdminLayout onLogout={handleLogout} />}>
-        <Route index element={<Navigate to="/pages" replace />} />
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="dashboard" element={<DashboardPage />} />
         <Route
           path="pages"
           element={
@@ -115,7 +117,7 @@ export function App() {
         <Route path="groups" element={<GroupsListRoute />} />
         <Route path="groups/:id" element={<GroupDetailRoute />} />
         <Route path="account" element={<AccountPage />} />
-        <Route path="*" element={<Navigate to="/pages" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>
   );

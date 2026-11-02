@@ -103,3 +103,25 @@ export interface RevisionSummary {
   blockCount: number;
   snippet: string;
 }
+
+export interface DashboardData {
+  system: {
+    version: string;
+    nodeVersion: string;
+    uptimeSeconds: number;
+    database: { ok: boolean; latencyMs: number };
+  };
+  content: {
+    byType: Record<string, { published: number; draft: number }>;
+    recent: {
+      id: string;
+      contentTypeId: string;
+      title: string;
+      status: ContentStatus;
+      updatedAt: string;
+    }[];
+    categories: number;
+  } | null;
+  media: { count: number; totalBytes: number } | null;
+  users: { users: number; groups: number } | null;
+}

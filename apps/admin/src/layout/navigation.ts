@@ -21,6 +21,11 @@ export type NavSection = {
 
 export const navigation: NavSection[] = [
   {
+    key: "start",
+    label: "Start",
+    items: [{ key: "dashboard", label: "Dashboard", to: "/dashboard", icon: "🏠" }],
+  },
+  {
     key: "content",
     label: "Inhalt",
     items: [

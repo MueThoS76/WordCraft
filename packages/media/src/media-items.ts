@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { desc, eq, mediaItems, type Database } from "@presscraft/database";
+import { count, desc, eq, mediaItems, sql, type Database } from "@presscraft/database";
 import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES, detectImageType } from "./validate-image.js";
 
 /**
@@ -99,4 +99,15 @@ export async function deleteMedia(db: Database, storageDir: string, id: string) 
     await fs.rm(resolveStoredPath(storageDir, item.storedName), { force: true });
   }
   return item;
+}
+
+/** Kennzahlen für das Admin-Dashboard. */
+export async function getMediaStats(db: Database) {
+  const [row] = await db
+    .select({
+      total: count(),
+      totalBytes: sql<number>`coalesce(sum(${mediaItems.sizeBytes}), 0)::int`,
+    })
+    .from(mediaItems);
+  return { count: row.total, totalBytes: row.totalBytes };
 }

@@ -1,5 +1,13 @@
 import type { BlockDocument } from "@presscraft/blocks";
-import { and, contentItems, contentRevisions, eq, type Database } from "@presscraft/database";
+import {
+  and,
+  contentItems,
+  contentRevisions,
+  count,
+  desc,
+  eq,
+  type Database,
+} from "@presscraft/database";
 import { recordDraftRevision } from "./revisions.js";
 
 const EMPTY_BLOCK_DOCUMENT: BlockDocument = { schemaVersion: 1, blocks: [] };
@@ -140,4 +148,47 @@ export async function getPublishedContentItem(db: Database, contentTypeId: strin
       ),
     );
   return item;
+}
+
+export interface ContentStats {
+  byType: Record<string, { published: number; draft: number }>;
+  recent: {
+    id: string;
+    contentTypeId: string;
+    title: string;
+    status: "draft" | "published";
+    updatedAt: Date;
+  }[];
+}
+
+/** Kennzahlen für das Admin-Dashboard: Anzahl je Typ/Status und zuletzt Bearbeitetes. */
+export async function getContentStats(db: Database, recentLimit = 6): Promise<ContentStats> {
+  const rows = await db
+    .select({
+      contentTypeId: contentItems.contentTypeId,
+      status: contentItems.status,
+      total: count(),
+    })
+    .from(contentItems)
+    .groupBy(contentItems.contentTypeId, contentItems.status);
+
+  const byType: ContentStats["byType"] = {};
+  for (const row of rows) {
+    const entry = (byType[row.contentTypeId] ??= { published: 0, draft: 0 });
+    entry[row.status] = row.total;
+  }
+
+  const recent = await db
+    .select({
+      id: contentItems.id,
+      contentTypeId: contentItems.contentTypeId,
+      title: contentItems.title,
+      status: contentItems.status,
+      updatedAt: contentItems.updatedAt,
+    })
+    .from(contentItems)
+    .orderBy(desc(contentItems.updatedAt))
+    .limit(recentLimit);
+
+  return { byType, recent };
 }

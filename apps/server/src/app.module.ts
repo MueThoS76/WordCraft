@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { AuthModule } from "./auth/auth.module.js";
 import { BootstrapModule } from "./bootstrap/bootstrap.module.js";
 import { ContentModule } from "./content/content.module.js";
+import { DashboardModule } from "./dashboard/dashboard.module.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { HealthModule } from "./health/health.module.js";
 import { MediaModule } from "./media/media.module.js";
@@ -16,6 +17,7 @@ import { UsersModule } from "./users/users.module.js";
     ContentModule,
     UsersModule,
     MediaModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}
