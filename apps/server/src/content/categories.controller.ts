@@ -18,6 +18,7 @@ import {
   deleteCategory,
   listCategoriesWithCounts,
   listPublicCategories,
+  listPublishedSlugs,
   listPublishedItems,
   updateCategory,
 } from "@presscraft/content";
@@ -118,5 +119,16 @@ export class PublicListingController {
   @Get("categories")
   categories() {
     return listPublicCategories(this.db, "post");
+  }
+
+  /** Alles, was die Sitemap braucht — nur Veröffentlichtes. */
+  @Get("sitemap")
+  async sitemap() {
+    const [pages, posts, categories] = await Promise.all([
+      listPublishedSlugs(this.db, "page"),
+      listPublishedSlugs(this.db, "post"),
+      listPublicCategories(this.db, "post"),
+    ]);
+    return { pages, posts, categories: categories.map((category) => ({ slug: category.slug })) };
   }
 }

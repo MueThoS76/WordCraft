@@ -9,6 +9,7 @@ interface PublishedPost {
   publishedAt: string | null;
   publishedBlockBody: BlockDocument | null;
   categories: CategorySummary[];
+  fieldValues: { excerpt?: unknown };
 }
 
 const { slug } = Astro.params;
@@ -19,7 +20,10 @@ if (!response.ok) {
 const post: PublishedPost | null = response.ok ? await response.json() : null;
 ---
 
-<Base title={post ? post.title : "Beitrag nicht gefunden"}>
+<Base
+  title={post ? post.title : "Beitrag nicht gefunden"}
+  description={typeof post?.fieldValues?.excerpt === "string" ? post.fieldValues.excerpt : undefined}
+>
   {
     post ? (
       <article>

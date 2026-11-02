@@ -675,3 +675,65 @@ describe("Design (Theme)", () => {
     }
   });
 });
+
+describe("Feeds und SEO", () => {
+  it("RSS, Sitemap und robots.txt enthalten Veröffentlichtes (maskiert), aber keine Entwürfe", async () => {
+    const login = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "admin@presscraft.local", password: "presscraft-dev" }),
+    });
+    const cookie = login.headers.get("set-cookie")!.split(";")[0];
+    const json = { "Content-Type": "application/json", Cookie: cookie };
+    const unique = Date.now();
+
+    const create = async (slug: string, title: string) => {
+      const response = await fetch(`${API_BASE_URL}/content/post`, {
+        method: "POST",
+        headers: json,
+        body: JSON.stringify({ slug, title }),
+      });
+      return (await response.json()) as { id: string };
+    };
+    const published = await create(`e2e-feed-${unique}`, `Feed <Test> & "Quote" ${unique}`);
+    const draft = await create(`e2e-feed-draft-${unique}`, `Entwurf ${unique}`);
+    await fetch(`${API_BASE_URL}/content/post/${published.id}`, {
+      method: "PATCH",
+      headers: json,
+      body: JSON.stringify({ fieldValues: { excerpt: "Meta & Auszug" } }),
+    });
+    await fetch(`${API_BASE_URL}/content/post/${published.id}/publish`, {
+      method: "POST",
+      headers: { Cookie: cookie },
+    });
+
+    try {
+      const feed = await fetch(`${WEB_BASE_URL}/feed.xml`);
+      expect(feed.headers.get("content-type")).toContain("rss+xml");
+      const feedXml = await feed.text();
+      expect(feedXml).toContain(`Feed &lt;Test&gt; &amp; &quot;Quote&quot; ${unique}`);
+      expect(feedXml).not.toContain(`Entwurf ${unique}`);
+
+      const sitemap = await fetch(`${WEB_BASE_URL}/sitemap.xml`).then((response) =>
+        response.text(),
+      );
+      expect(sitemap).toContain(`/blog/e2e-feed-${unique}`);
+      expect(sitemap).not.toContain(`e2e-feed-draft-${unique}`);
+
+      const robots = await fetch(`${WEB_BASE_URL}/robots.txt`).then((response) => response.text());
+      expect(robots).toContain("Sitemap:");
+
+      const detail = await fetch(`${WEB_BASE_URL}/blog/e2e-feed-${unique}`).then((response) =>
+        response.text(),
+      );
+      expect(detail).toContain('<meta name="description" content="Meta &#38; Auszug"');
+    } finally {
+      for (const id of [published.id, draft.id]) {
+        await fetch(`${API_BASE_URL}/content/post/${id}`, {
+          method: "DELETE",
+          headers: { Cookie: cookie },
+        });
+      }
+    }
+  });
+});

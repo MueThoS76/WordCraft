@@ -192,3 +192,16 @@ export async function getContentStats(db: Database, recentLimit = 6): Promise<Co
 
   return { byType, recent };
 }
+
+/** Für die Sitemap: Slug und letzte Änderung aller veröffentlichten Items eines Typs. */
+export async function listPublishedSlugs(db: Database, contentTypeId: string) {
+  return await db
+    .select({
+      slug: contentItems.slug,
+      updatedAt: contentItems.updatedAt,
+      publishedAt: contentItems.publishedAt,
+    })
+    .from(contentItems)
+    .where(and(eq(contentItems.contentTypeId, contentTypeId), eq(contentItems.status, "published")))
+    .orderBy(desc(contentItems.publishedAt));
+}
