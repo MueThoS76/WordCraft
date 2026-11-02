@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Delete,
   Get,
@@ -38,6 +39,7 @@ import { CapabilityGuard, RequireCapability } from "../auth/capability.guard.js"
 import { CAPABILITY_CONTENT_MANAGE } from "../auth/core-capabilities.js";
 import type { AuthenticatedRequest } from "../auth/session.guard.js";
 import { SessionGuard } from "../auth/session.guard.js";
+import { hasPgErrorCode } from "../common/pg-error.js";
 import { DATABASE_CONNECTION } from "../database/database.module.js";
 import {
   createContentItemSchema,
@@ -64,17 +66,21 @@ export class ContentItemsController {
   }
 
   @Post()
-  create(
+  async create(
     @Param("typeId") typeId: string,
     @Body() body: unknown,
     @Req() request: AuthenticatedRequest,
   ) {
     const input = this.parse(createContentItemSchema, body);
-    return createContentItem(this.db, {
-      contentTypeId: typeId,
-      authorId: request.userId,
-      ...input,
-    });
+    try {
+      return await createContentItem(this.db, {
+        contentTypeId: typeId,
+        authorId: request.userId,
+        ...input,
+      });
+    } catch (error) {
+      throw this.translateConflict(error);
+    }
   }
 
   @Get(":id")
@@ -106,7 +112,12 @@ export class ContentItemsController {
   ) {
     const input = this.parse(updateContentItemSchema, body);
     this.validateBlocks(input.blockBody);
-    const item = await saveContentItem(this.db, id, input, request.userId);
+    let item;
+    try {
+      item = await saveContentItem(this.db, id, input, request.userId);
+    } catch (error) {
+      throw this.translateConflict(error);
+    }
     if (!item) {
       throw new NotFoundException("Content-Item nicht gefunden.");
     }
@@ -189,6 +200,14 @@ export class ContentItemsController {
       }
       throw error;
     }
+  }
+
+  /** Doppelter Slug (Unique-Index pro Typ) → verständliche 409-Antwort statt 500. */
+  private translateConflict(error: unknown): unknown {
+    if (hasPgErrorCode(error, "23505")) {
+      return new ConflictException("Dieser Slug ist bereits vergeben.");
+    }
+    return error;
   }
 
   private parse<T>(schema: z.ZodType<T>, body: unknown): T {

@@ -45,7 +45,8 @@ export function ContentEditorPage({
   });
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -79,15 +80,23 @@ export function ContentEditorPage({
         clearTimeout(saveTimeout.current);
       }
       saveTimeout.current = setTimeout(async () => {
-        const updated = await api.updateContent(typeId, id, {
-          title: next.title,
-          slug: next.slug,
-          blockBody: next.blockDocument,
-          // Bestehende Feldwerte erhalten, nur bekannte Felder überschreiben.
-          ...(isPost ? { fieldValues: { ...next.fieldValues, excerpt: next.excerpt } } : {}),
-        });
-        setItem((previous) => ({ ...updated, categories: previous?.categories }));
-        setSaveState("saved");
+        try {
+          const updated = await api.updateContent(typeId, id, {
+            title: next.title,
+            slug: next.slug,
+            blockBody: next.blockDocument,
+            // Bestehende Feldwerte erhalten, nur bekannte Felder überschreiben.
+            ...(isPost ? { fieldValues: { ...next.fieldValues, excerpt: next.excerpt } } : {}),
+          });
+          setItem((previous) => ({ ...updated, categories: previous?.categories }));
+          setSaveError(null);
+          setSaveState("saved");
+        } catch (reason) {
+          // z. B. ungültiger Block (unsicherer Link) oder doppelter Slug — sichtbar
+          // machen, statt dauerhaft "Speichert …" anzuzeigen.
+          setSaveError(reason instanceof Error ? reason.message : "Speichern fehlgeschlagen.");
+          setSaveState("error");
+        }
       }, AUTOSAVE_DELAY_MS);
     },
     [typeId, id, isPost],
@@ -129,15 +138,22 @@ export function ContentEditorPage({
       clearTimeout(saveTimeout.current);
       saveTimeout.current = undefined;
     }
-    await api.updateContent(typeId, id, {
-      title,
-      slug,
-      blockBody: blockDocument,
-      ...(isPost ? { fieldValues: { ...current.fieldValues, excerpt } } : {}),
-    });
-    const published = await api.publishContent(typeId, id);
-    setItem((previous) => ({ ...published, categories: previous?.categories }));
-    setSaveState("saved");
+    try {
+      await api.updateContent(typeId, id, {
+        title,
+        slug,
+        blockBody: blockDocument,
+        ...(isPost ? { fieldValues: { ...current.fieldValues, excerpt } } : {}),
+      });
+      const published = await api.publishContent(typeId, id);
+      setItem((previous) => ({ ...published, categories: previous?.categories }));
+      setSaveError(null);
+      setSaveState("saved");
+    } catch (reason) {
+      // Nicht veröffentlichen, wenn der aktuelle Stand nicht gespeichert werden konnte.
+      setSaveError(reason instanceof Error ? reason.message : "Veröffentlichen fehlgeschlagen.");
+      setSaveState("error");
+    }
   }
 
   if (!item) {
@@ -151,9 +167,24 @@ export function ContentEditorPage({
           ← Zur Übersicht
         </button>
         <span className="save-state">
-          {saveState === "saving" ? "Speichert …" : saveState === "saved" ? "Gespeichert" : ""}
+          {saveState === "saving"
+            ? "Speichert …"
+            : saveState === "saved"
+              ? "Gespeichert"
+              : saveState === "error"
+                ? "Nicht gespeichert"
+                : ""}
         </span>
       </header>
+
+      {saveError && (
+        <p
+          role="alert"
+          className="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800"
+        >
+          {saveError}
+        </p>
+      )}
 
       <label>
         Titel

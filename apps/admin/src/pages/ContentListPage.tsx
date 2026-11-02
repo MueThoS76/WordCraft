@@ -1,3 +1,4 @@
+import { slugify } from "@presscraft/shared";
 import { useEffect, useState, type FormEvent } from "react";
 import { api } from "../api/client";
 import type { ContentItem } from "../api/types";
@@ -20,6 +21,7 @@ export function ContentListPage({
   const [loading, setLoading] = useState(true);
   const [newSlug, setNewSlug] = useState("");
   const [newTitle, setNewTitle] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   async function reload() {
     setItems(await api.listContent(typeId));
@@ -32,14 +34,25 @@ export function ContentListPage({
 
   async function handleCreate(event: FormEvent) {
     event.preventDefault();
-    if (!newSlug || !newTitle) {
+    if (!newTitle.trim()) {
       return;
     }
-    const created = await api.createContent(typeId, { slug: newSlug, title: newTitle });
-    setNewSlug("");
-    setNewTitle("");
-    await reload();
-    onOpen(created.id);
+    // Ohne eigenen Slug wird er aus dem Titel abgeleitet.
+    const slug = slugify(newSlug || newTitle);
+    if (!slug) {
+      setError("Aus dem Titel lässt sich kein gültiger Slug bilden — bitte einen Slug angeben.");
+      return;
+    }
+    try {
+      const created = await api.createContent(typeId, { slug, title: newTitle.trim() });
+      setNewSlug("");
+      setNewTitle("");
+      setError(null);
+      await reload();
+      onOpen(created.id);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Anlegen fehlgeschlagen.");
+    }
   }
 
   async function handleDelete(id: string) {
@@ -56,17 +69,19 @@ export function ContentListPage({
 
       <form onSubmit={handleCreate} className="new-page-form">
         <input
-          placeholder="slug"
-          value={newSlug}
-          onChange={(event) => setNewSlug(event.target.value)}
-        />
-        <input
           placeholder="Titel"
           value={newTitle}
           onChange={(event) => setNewTitle(event.target.value)}
         />
+        <input
+          placeholder="slug (optional, sonst aus Titel)"
+          value={newSlug}
+          onChange={(event) => setNewSlug(event.target.value)}
+        />
         <button type="submit">Neu: {singular}</button>
       </form>
+
+      {error && <p className="text-sm text-red-700">{error}</p>}
 
       {loading ? (
         <p>Lädt …</p>

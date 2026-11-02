@@ -38,6 +38,9 @@ importers:
       '@presscraft/blocks':
         specifier: workspace:*
         version: link:../../packages/blocks
+      '@presscraft/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@presscraft/theme-sdk':
         specifier: workspace:^
         version: link:../../packages/theme-sdk
@@ -235,6 +238,9 @@ importers:
       '@presscraft/database':
         specifier: workspace:*
         version: link:../database
+      '@presscraft/shared':
+        specifier: workspace:*
+        version: link:../shared
     devDependencies:
       '@types/node':
         specifier: ^22.5.0
@@ -326,9 +332,15 @@ importers:
 
   packages/shared:
     devDependencies:
+      '@types/node':
+        specifier: ^22.5.0
+        version: 22.20.5
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.1
+        version: 2.1.9(@types/node@22.20.5)(lightningcss@1.32.0)
 
   packages/theme-sdk:
     dependencies:

@@ -53,7 +53,9 @@ async function bootstrap(): Promise<void> {
   }
 
   app.setGlobalPrefix("api/v1");
-  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(
+    new HttpExceptionFilter({ serveAdminFallback: fs.existsSync(adminStaticDir) }),
+  );
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port, "0.0.0.0");
 }

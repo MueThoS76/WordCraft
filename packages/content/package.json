@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@presscraft/blocks": "workspace:*",
-    "@presscraft/database": "workspace:*"
+    "@presscraft/database": "workspace:*",
+    "@presscraft/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.5.0",

@@ -14,7 +14,8 @@
     "@presscraft/theme-sdk": "workspace:^",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "6"
+    "react-router-dom": "6",
+    "@presscraft/shared": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

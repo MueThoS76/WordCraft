@@ -938,3 +938,79 @@ describe("Suche", () => {
     }
   });
 });
+
+describe("Admin-UI unter /admin", () => {
+  it("liefert bei Deep-Links index.html (Reload im Router), echte Fehler bleiben 404", async () => {
+    const origin = `http://localhost:${SERVER_PORT}`;
+    for (const route of [
+      "/admin/",
+      "/admin/posts",
+      "/admin/posts/irgendeine-id",
+      "/admin/design",
+    ]) {
+      const response = await fetch(`${origin}${route}`);
+      expect(response.status, route).toBe(200);
+      expect(response.headers.get("content-type"), route).toContain("text/html");
+    }
+
+    const missingAsset = await fetch(`${origin}/admin/assets/gibt-es-nicht.js`);
+    expect(missingAsset.status).toBe(404);
+
+    const unknownApi = await fetch(`${origin}/api/v1/gibt-es-nicht`);
+    expect(unknownApi.status).toBe(404);
+    expect(((await unknownApi.json()) as { error: { code: string } }).error.code).toBe(
+      "NotFoundException",
+    );
+
+    const outsideAdmin = await fetch(`${origin}/irgendwas`);
+    expect(outsideAdmin.status).toBe(404);
+    expect(outsideAdmin.headers.get("content-type")).toContain("application/json");
+  });
+});
+
+describe("Slug-Konflikte", () => {
+  it("doppelter Slug liefert 409 mit verständlicher Meldung statt 500", async () => {
+    const login = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "admin@presscraft.local", password: "presscraft-dev" }),
+    });
+    const cookie = login.headers.get("set-cookie")!.split(";")[0];
+    const json = { "Content-Type": "application/json", Cookie: cookie };
+    const slug = `e2e-konflikt-${Date.now()}`;
+    const create = (body: unknown) =>
+      fetch(`${API_BASE_URL}/content/page`, {
+        method: "POST",
+        headers: json,
+        body: JSON.stringify(body),
+      });
+
+    const first = await create({ slug, title: "Erste" });
+    expect(first.status).toBe(201);
+    const firstItem = (await first.json()) as { id: string };
+    const second = await create({ slug: `${slug}-b`, title: "Zweite" });
+    const secondItem = (await second.json()) as { id: string };
+
+    try {
+      const duplicate = await create({ slug, title: "Doppelt" });
+      expect(duplicate.status).toBe(409);
+      expect(((await duplicate.json()) as { error: { message: string } }).error.message).toContain(
+        "Slug",
+      );
+
+      const rename = await fetch(`${API_BASE_URL}/content/page/${secondItem.id}`, {
+        method: "PATCH",
+        headers: json,
+        body: JSON.stringify({ slug }),
+      });
+      expect(rename.status).toBe(409);
+    } finally {
+      for (const id of [firstItem.id, secondItem.id]) {
+        await fetch(`${API_BASE_URL}/content/page/${id}`, {
+          method: "DELETE",
+          headers: { Cookie: cookie },
+        });
+      }
+    }
+  });
+});
