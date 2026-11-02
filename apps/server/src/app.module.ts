@@ -4,9 +4,18 @@ import { BootstrapModule } from "./bootstrap/bootstrap.module.js";
 import { ContentModule } from "./content/content.module.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { HealthModule } from "./health/health.module.js";
+import { MediaModule } from "./media/media.module.js";
 import { UsersModule } from "./users/users.module.js";
 
 @Module({
-  imports: [DatabaseModule, HealthModule, BootstrapModule, AuthModule, ContentModule, UsersModule],
+  imports: [
+    DatabaseModule,
+    HealthModule,
+    BootstrapModule,
+    AuthModule,
+    ContentModule,
+    UsersModule,
+    MediaModule,
+  ],
 })
 export class AppModule {}

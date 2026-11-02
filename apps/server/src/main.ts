@@ -2,10 +2,12 @@ import "reflect-metadata";
 import fs from "node:fs";
 import path from "node:path";
 import fastifyCookie from "@fastify/cookie";
+import fastifyMultipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
 import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, type NestFastifyApplication } from "@nestjs/platform-fastify";
 import { runMigrations } from "@presscraft/database";
+import { MAX_UPLOAD_BYTES } from "@presscraft/media";
 import { AppModule } from "./app.module.js";
 import { HttpExceptionFilter } from "./common/http-exception.filter.js";
 
@@ -26,6 +28,7 @@ async function bootstrap(): Promise<void> {
 
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
   await app.register(fastifyCookie);
+  await app.register(fastifyMultipart, { limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 } });
   // Cookie-basierte Session-Auth braucht CORS mit konkretem Origin statt "*"
   // (Browser schicken Credentials bei Wildcard-Origin nicht mit).
   app.enableCors({

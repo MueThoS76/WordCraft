@@ -6,6 +6,7 @@ import { AccountPage } from "./pages/AccountPage";
 import { GroupDetailPage } from "./pages/GroupDetailPage";
 import { GroupsListPage } from "./pages/GroupsListPage";
 import { LoginPage } from "./pages/LoginPage";
+import { MediaPage } from "./pages/MediaPage";
 import { PageEditorPage } from "./pages/PageEditorPage";
 import { PagesListPage } from "./pages/PagesListPage";
 import { UsersListPage } from "./pages/UsersListPage";
@@ -69,6 +70,7 @@ export function App() {
         <Route index element={<Navigate to="/pages" replace />} />
         <Route path="pages" element={<PagesListRoute />} />
         <Route path="pages/:id" element={<PageEditorRoute />} />
+        <Route path="media" element={<MediaPage />} />
         <Route path="users" element={<UsersListPage />} />
         <Route path="groups" element={<GroupsListRoute />} />
         <Route path="groups/:id" element={<GroupDetailRoute />} />

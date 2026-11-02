@@ -23,7 +23,10 @@ export const navigation: NavSection[] = [
   {
     key: "content",
     label: "Inhalt",
-    items: [{ key: "pages", label: "Seiten", to: "/pages", icon: "📄" }],
+    items: [
+      { key: "pages", label: "Seiten", to: "/pages", icon: "📄" },
+      { key: "media", label: "Medien", to: "/media", icon: "🖼️" },
+    ],
   },
   {
     key: "users",

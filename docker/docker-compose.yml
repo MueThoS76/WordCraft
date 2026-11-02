@@ -38,6 +38,11 @@ services:
       # apps/admin unter /admin mitläuft (ADR 0012/0014).
       ADMIN_ORIGIN: ${SERVER_PUBLIC_URL:-http://localhost:3000}
       PORT: "3000"
+      # Hochgeladene Medien — als Volume, damit sie Container-Updates überleben.
+      MEDIA_DIR: /data/media
+      PUBLIC_URL: ${SERVER_PUBLIC_URL:-http://localhost:3000}
+    volumes:
+      - media-data:/data/media
     ports:
       - "3000:3000"
 
@@ -55,3 +60,4 @@ services:
 
 volumes:
   postgres-data:
+  media-data:

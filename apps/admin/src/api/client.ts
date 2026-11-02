@@ -6,6 +6,7 @@ import type {
   ContentType,
   Group,
   GroupDetail,
+  MediaItem,
   Me,
 } from "./types";
 
@@ -28,7 +29,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       // Nur setzen, wenn tatsächlich ein Body mitgeschickt wird — sonst
       // lehnt der Server einen leeren Body mit diesem Content-Type ab
       // (z. B. bei publish/unpublish/logout ohne Payload).
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      // Bei FormData (Upload) setzt der Browser den Content-Type samt
+      // Boundary selbst — ein eigener Header würde den Upload zerstören.
+      ...(options.body && !(options.body instanceof FormData)
+        ? { "Content-Type": "application/json" }
+        : {}),
       ...options.headers,
     },
   });
@@ -151,6 +156,23 @@ export const api = {
   },
   removeGroupMember(groupId: string, userId: string) {
     return request<{ success: true }>(`/groups/${groupId}/users/${userId}`, { method: "DELETE" });
+  },
+  listMedia() {
+    return request<MediaItem[]>("/media");
+  },
+  uploadMedia(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request<MediaItem>("/media", { method: "POST", body: formData });
+  },
+  updateMediaAltText(id: string, altText: string) {
+    return request<MediaItem>(`/media/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ altText }),
+    });
+  },
+  deleteMedia(id: string) {
+    return request<{ success: true }>(`/media/${id}`, { method: "DELETE" });
   },
   listCapabilities() {
     return request<Capability[]>("/capabilities");

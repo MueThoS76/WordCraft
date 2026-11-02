@@ -67,3 +67,16 @@ export interface Capability {
   providedBy: string;
   description: string | null;
 }
+
+export interface MediaItem {
+  id: string;
+  storedName: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  altText: string;
+  uploadedBy: string;
+  createdAt: string;
+  /** Vollständige, öffentlich abrufbare URL der Datei. */
+  url: string;
+}

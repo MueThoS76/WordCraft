@@ -9,6 +9,7 @@
  */
 export const CAPABILITY_CONTENT_MANAGE = "content.manage";
 export const CAPABILITY_USERS_MANAGE = "users.manage";
+export const CAPABILITY_MEDIA_MANAGE = "media.manage";
 
 export const CORE_CAPABILITIES = [
   {
@@ -18,6 +19,10 @@ export const CORE_CAPABILITIES = [
   {
     id: CAPABILITY_USERS_MANAGE,
     description: "User und Gruppen verwalten.",
+  },
+  {
+    id: CAPABILITY_MEDIA_MANAGE,
+    description: "Medien hochladen, beschreiben und löschen.",
   },
 ];
 
