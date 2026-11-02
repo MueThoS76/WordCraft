@@ -390,3 +390,74 @@ describe("Beiträge und Kategorien", () => {
     });
   });
 });
+
+describe("Revisionen", () => {
+  it("Verlauf entsteht beim Bearbeiten und Veröffentlichen; Wiederherstellen setzt den Entwurf zurück", async () => {
+    const login = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "admin@presscraft.local", password: "presscraft-dev" }),
+    });
+    const cookie = login.headers.get("set-cookie")!.split(";")[0];
+    const json = { "Content-Type": "application/json", Cookie: cookie };
+    const bodyWith = (text: string) => ({
+      schemaVersion: 1,
+      blocks: [
+        {
+          id: "123e4567-e89b-12d3-a456-426614174077",
+          type: "core/paragraph",
+          attributes: { text },
+        },
+      ],
+    });
+
+    const created = await fetch(`${API_BASE_URL}/content/page`, {
+      method: "POST",
+      headers: json,
+      body: JSON.stringify({ slug: `e2e-rev-${Date.now()}`, title: "Revisionen" }),
+    });
+    const page = (await created.json()) as { id: string };
+    const patch = (text: string) =>
+      fetch(`${API_BASE_URL}/content/page/${page.id}`, {
+        method: "PATCH",
+        headers: json,
+        body: JSON.stringify({ blockBody: bodyWith(text) }),
+      });
+
+    await patch("Stand 1");
+    await fetch(`${API_BASE_URL}/content/page/${page.id}/publish`, {
+      method: "POST",
+      headers: { Cookie: cookie },
+    });
+    await patch("Stand 2");
+
+    const list = (await (
+      await fetch(`${API_BASE_URL}/content/page/${page.id}/revisions`, {
+        headers: { Cookie: cookie },
+      })
+    ).json()) as { id: string; statusAtSave: string; snippet: string }[];
+    expect(list.map((revision) => revision.statusAtSave)).toEqual(["draft", "published", "draft"]);
+
+    const published = list.find((revision) => revision.statusAtSave === "published")!;
+    const restoreResponse = await fetch(
+      `${API_BASE_URL}/content/page/${page.id}/revisions/${published.id}/restore`,
+      { method: "POST", headers: { Cookie: cookie } },
+    );
+    expect(restoreResponse.ok).toBe(true);
+    const restored = (await restoreResponse.json()) as {
+      blockBody: { blocks: { attributes: { text: string } }[] };
+    };
+    expect(restored.blockBody.blocks[0].attributes.text).toBe("Stand 1");
+
+    const unknown = await fetch(
+      `${API_BASE_URL}/content/page/${page.id}/revisions/00000000-0000-0000-0000-000000000000/restore`,
+      { method: "POST", headers: { Cookie: cookie } },
+    );
+    expect(unknown.status).toBe(404);
+
+    await fetch(`${API_BASE_URL}/content/page/${page.id}`, {
+      method: "DELETE",
+      headers: { Cookie: cookie },
+    });
+  });
+});

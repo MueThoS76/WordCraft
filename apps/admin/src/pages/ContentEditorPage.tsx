@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { Category, ContentItem } from "../api/types";
 import { BlockEditor } from "../editor/BlockEditor";
+import { RevisionsPanel } from "../editor/RevisionsPanel";
 
 const AUTOSAVE_DELAY_MS = 1000;
 // Dev-Default, passend zum Astro-Dev-Server aus Implementierungsschritt 6.
@@ -47,19 +48,23 @@ export function ContentEditorPage({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  const applyLoaded = useCallback((loaded: ContentItem) => {
+    setItem(loaded);
+    setTitle(loaded.title);
+    setSlug(loaded.slug);
+    setExcerpt(typeof loaded.fieldValues.excerpt === "string" ? loaded.fieldValues.excerpt : "");
+    setBlockDocument(toBlockDocument(loaded.blockBody));
+    setSelectedCategoryIds((loaded.categories ?? []).map((category) => category.id));
+  }, []);
+
   useEffect(() => {
-    api.getContent(typeId, id).then((loaded) => {
-      setItem(loaded);
-      setTitle(loaded.title);
-      setSlug(loaded.slug);
-      setExcerpt(typeof loaded.fieldValues.excerpt === "string" ? loaded.fieldValues.excerpt : "");
-      setBlockDocument(toBlockDocument(loaded.blockBody));
-      setSelectedCategoryIds((loaded.categories ?? []).map((category) => category.id));
-    });
+    api.getContent(typeId, id).then(applyLoaded);
     if (isPost) {
       api.listCategories().then(setAllCategories);
     }
-  }, [typeId, id, isPost]);
+  }, [typeId, id, isPost, applyLoaded]);
 
   const scheduleSave = useCallback(
     (next: {
@@ -200,6 +205,9 @@ export function ContentEditorPage({
         <button type="button" onClick={handlePublish}>
           Veröffentlichen
         </button>
+        <button type="button" onClick={() => setHistoryOpen((open) => !open)}>
+          {historyOpen ? "Verlauf ausblenden" : "Verlauf"}
+        </button>
         <span>Status: {item.status}</span>
         {item.status === "published" && (
           <a
@@ -211,6 +219,22 @@ export function ContentEditorPage({
           </a>
         )}
       </footer>
+
+      {historyOpen && (
+        <RevisionsPanel
+          typeId={typeId}
+          id={id}
+          refreshKey={`${saveState}-${item.updatedAt}`}
+          onRestored={(restored) => {
+            if (saveTimeout.current) {
+              clearTimeout(saveTimeout.current);
+              saveTimeout.current = undefined;
+            }
+            applyLoaded(restored);
+            setSaveState("saved");
+          }}
+        />
+      )}
     </main>
   );
 }

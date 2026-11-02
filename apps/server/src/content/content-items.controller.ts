@@ -16,13 +16,16 @@ import {
 import {
   createContentItem,
   getCategoriesForItems,
+  getRevision,
+  listRevisions,
+  restoreRevision,
+  saveContentItem,
   setItemCategories,
   deleteContentItem,
   getContentItem,
   listContentItems,
   publishContentItem,
   unpublishContentItem,
-  updateContentItem,
 } from "@presscraft/content";
 import type { Database } from "@presscraft/database";
 import { z, ZodError } from "zod";
@@ -89,9 +92,13 @@ export class ContentItemsController {
   }
 
   @Patch(":id")
-  async update(@Param("id") id: string, @Body() body: unknown) {
+  async update(
+    @Param("id") id: string,
+    @Body() body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
     const input = this.parse(updateContentItemSchema, body);
-    const item = await updateContentItem(this.db, id, input);
+    const item = await saveContentItem(this.db, id, input, request.userId);
     if (!item) {
       throw new NotFoundException("Content-Item nicht gefunden.");
     }
@@ -102,6 +109,35 @@ export class ContentItemsController {
   async remove(@Param("id") id: string) {
     await deleteContentItem(this.db, id);
     return { success: true };
+  }
+
+  @Get(":id/revisions")
+  async revisions(@Param("id") id: string) {
+    return listRevisions(this.db, id);
+  }
+
+  @Get(":id/revisions/:revisionId")
+  async revision(@Param("id") id: string, @Param("revisionId") revisionId: string) {
+    const revision = await getRevision(this.db, id, revisionId);
+    if (!revision) {
+      throw new NotFoundException("Revision nicht gefunden.");
+    }
+    return revision;
+  }
+
+  /** Stellt eine Revision als neuen Entwurf wieder her (Veröffentlichtes bleibt unberührt). */
+  @Post(":id/revisions/:revisionId/restore")
+  async restore(
+    @Param("id") id: string,
+    @Param("revisionId") revisionId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const item = await restoreRevision(this.db, id, revisionId, request.userId);
+    if (!item) {
+      throw new NotFoundException("Revision nicht gefunden.");
+    }
+    const categories = await getCategoriesForItems(this.db, [item.id]);
+    return { ...item, categories: categories.get(item.id) ?? [] };
   }
 
   @Post(":id/publish")

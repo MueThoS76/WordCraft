@@ -94,3 +94,12 @@ export interface Category extends CategorySummary {
   /** Anzahl zugeordneter Items (nur in der Admin-Liste gefüllt). */
   itemCount?: number;
 }
+
+export interface RevisionSummary {
+  id: string;
+  statusAtSave: ContentStatus;
+  createdAt: string;
+  createdByEmail: string | null;
+  blockCount: number;
+  snippet: string;
+}

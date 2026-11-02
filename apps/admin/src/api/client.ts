@@ -10,6 +10,7 @@ import type {
   GroupDetail,
   MediaItem,
   Me,
+  RevisionSummary,
 } from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000/api/v1";
@@ -126,6 +127,15 @@ export const api = {
     return request<{ categories: CategorySummary[] }>(`/content/${typeId}/${id}/categories`, {
       method: "PUT",
       body: JSON.stringify({ categoryIds }),
+    });
+  },
+
+  listRevisions(typeId: string, id: string) {
+    return request<RevisionSummary[]>(`/content/${typeId}/${id}/revisions`);
+  },
+  restoreRevision(typeId: string, id: string, revisionId: string) {
+    return request<ContentItem>(`/content/${typeId}/${id}/revisions/${revisionId}/restore`, {
+      method: "POST",
     });
   },
 

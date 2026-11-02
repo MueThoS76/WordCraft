@@ -1,5 +1,6 @@
 import type { BlockDocument } from "@presscraft/blocks";
 import { and, contentItems, contentRevisions, eq, type Database } from "@presscraft/database";
+import { recordDraftRevision } from "./revisions.js";
 
 const EMPTY_BLOCK_DOCUMENT: BlockDocument = { schemaVersion: 1, blocks: [] };
 
@@ -57,6 +58,23 @@ export async function updateContentItem(db: Database, id: string, input: UpdateC
     .set({ ...input, updatedAt: new Date() })
     .where(eq(contentItems.id, id))
     .returning();
+  return item;
+}
+
+/**
+ * Wie updateContentItem, hält aber Änderungen an Inhalt oder Feldwerten
+ * zusätzlich im Revisionsverlauf fest (ADR 0009).
+ */
+export async function saveContentItem(
+  db: Database,
+  id: string,
+  input: UpdateContentItemInput,
+  userId: string,
+) {
+  const item = await updateContentItem(db, id, input);
+  if (item && (input.blockBody !== undefined || input.fieldValues !== undefined)) {
+    await recordDraftRevision(db, item, userId);
+  }
   return item;
 }
 
