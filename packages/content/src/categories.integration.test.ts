@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   categories,
   contentItems,
@@ -20,7 +21,9 @@ import {
 import { createContentItem, publishContentItem } from "./content-items.js";
 import { ensureContentType } from "./content-types.js";
 
-const TEST_USER_ID = "77777777-7777-7777-7777-777777777777";
+// Zufällig statt fest: Andere Testdateien laufen parallel (Turbo) gegen dieselbe
+// Datenbank, feste IDs würden kollidieren.
+const TEST_USER_ID = randomUUID();
 const TEST_TYPE_ID = "test-post";
 
 describe("categories (integration)", () => {
@@ -35,7 +38,7 @@ describe("categories (integration)", () => {
     db = createDb(connectionString);
     await db.insert(users).values({
       id: TEST_USER_ID,
-      email: "categories-test@presscraft.local",
+      email: `categories-test-${TEST_USER_ID}@presscraft.local`,
       passwordHash: "disabled",
     });
     await ensureContentType(db, { id: TEST_TYPE_ID, label: "Test-Beitrag" });

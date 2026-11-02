@@ -1,10 +1,13 @@
+import { randomUUID } from "node:crypto";
 import { contentItems, createDb, eq, users, type Database } from "@presscraft/database";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createContentItem, publishContentItem, saveContentItem } from "./content-items.js";
 import { ensureContentType } from "./content-types.js";
 import { buildSnippet, escapeLikePattern, extractPlainText, searchPublished } from "./search.js";
 
-const TEST_USER_ID = "55555555-5555-5555-5555-555555555555";
+// Zufällig statt fest: Andere Testdateien laufen parallel (Turbo) gegen dieselbe
+// Datenbank, feste IDs würden kollidieren.
+const TEST_USER_ID = randomUUID();
 
 function body(text: string) {
   return {
@@ -45,7 +48,7 @@ describe("search", () => {
       db = createDb(connectionString);
       await db.insert(users).values({
         id: TEST_USER_ID,
-        email: "search-test@presscraft.local",
+        email: `search-test-${TEST_USER_ID}@presscraft.local`,
         passwordHash: "disabled",
       });
       await ensureContentType(db, { id: "page", label: "Seite" });
