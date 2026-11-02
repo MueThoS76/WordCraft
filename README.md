@@ -2,7 +2,7 @@
 
 Ein vollständig Open-Source und self-hostbares Content-Management-System als moderne Alternative zu WordPress — mit visuellem WYSIWYG-Seiteneditor, programmierbaren/visuell konfigurierbaren Themes und einem erweiterbaren Plugin-System.
 
-**Meilenstein 1 ist erreicht:** Seiten per Admin-UI erstellen, mit Blöcken befüllen und veröffentlichen — live auf der öffentlichen Astro-Seite sichtbar. Die langfristige Vision (Userverwaltung, Theme-Editor, Plugin-Marketplace, …) ist architektonisch vorbereitet, aber noch nicht umgesetzt — siehe [`docs/vision/feature-roadmap.md`](docs/vision/feature-roadmap.md).
+**Meilenstein 1 ist erreicht**, dazu kamen Userverwaltung mit 2FA und die Alltagsfunktionen eines CMS: Seiten und Beiträge mit Kategorien, Blöcke (Absatz, Überschrift, Bild, Liste, Zitat, Trennlinie, Button) mit Drag-and-drop, Medienbibliothek, Revisionsverlauf, Dashboard, Einstellungen und Menü, Design-Editor mit Live-Vorschau, RSS/Sitemap und ein Einrichtungsassistent. Was noch fehlt (vor allem Plugin-System und Update-Prüfung), steht in [`docs/decisions/0018-erweiterungen-nach-meilenstein-1.md`](docs/decisions/0018-erweiterungen-nach-meilenstein-1.md) und in [`docs/vision/feature-roadmap.md`](docs/vision/feature-roadmap.md).
 
 ## Schnellstart (Self-Hosting)
 
@@ -11,7 +11,7 @@ pnpm install
 pnpm selfhost:up
 ```
 
-Danach: Admin-UI unter `http://localhost:3000/admin` (Login: `admin@presscraft.local` / `presscraft-dev` — **vor echtem Einsatz ändern**, siehe `.env.example`), öffentliche Seite unter `http://localhost:4321`. Details: [`docker/README.md`](docker/README.md).
+Danach: Admin-UI unter `http://localhost:3000/admin` — beim ersten Aufruf erscheint der **Einrichtungsassistent**, in dem du deinen Admin-Account anlegst (es gibt kein Standardpasswort). Die öffentliche Seite liegt unter `http://localhost:4321`. Wer die Einrichtung automatisieren will, setzt `ADMIN_EMAIL` und `ADMIN_PASSWORD` (siehe `.env.example`). Details: [`docker/README.md`](docker/README.md).
 
 ## Entwicklung
 

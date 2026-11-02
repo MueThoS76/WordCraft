@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "@presscraft/auth": "workspace:*",
+    "@presscraft/database": "workspace:^",
     "@presscraft/server": "workspace:*",
     "@presscraft/web": "workspace:*",
     "@types/node": "^22.5.0",

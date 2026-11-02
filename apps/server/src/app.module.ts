@@ -6,6 +6,7 @@ import { DashboardModule } from "./dashboard/dashboard.module.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { HealthModule } from "./health/health.module.js";
 import { MediaModule } from "./media/media.module.js";
+import { SetupModule } from "./setup/setup.module.js";
 import { SettingsModule } from "./settings/settings.module.js";
 import { UsersModule } from "./users/users.module.js";
 
@@ -20,6 +21,7 @@ import { UsersModule } from "./users/users.module.js";
     MediaModule,
     DashboardModule,
     SettingsModule,
+    SetupModule,
   ],
 })
 export class AppModule {}

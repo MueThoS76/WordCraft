@@ -12,6 +12,7 @@ import { ContentEditorPage } from "./pages/ContentEditorPage";
 import { ContentListPage } from "./pages/ContentListPage";
 import { GroupDetailPage } from "./pages/GroupDetailPage";
 import { GroupsListPage } from "./pages/GroupsListPage";
+import { SetupPage } from "./pages/SetupPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MediaPage } from "./pages/MediaPage";
 import { UsersListPage } from "./pages/UsersListPage";
@@ -67,17 +68,38 @@ function GroupDetailRoute() {
 export function App() {
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [setupRequired, setSetupRequired] = useState(false);
 
   useEffect(() => {
     api
-      .listContent("page")
-      .then(() => setIsAuthenticated(true))
+      .setupStatus()
+      .then(async ({ setupRequired: required }) => {
+        if (required) {
+          setSetupRequired(true);
+          return;
+        }
+        await api
+          .listContent("page")
+          .then(() => setIsAuthenticated(true))
+          .catch(() => setIsAuthenticated(false));
+      })
       .catch(() => setIsAuthenticated(false))
       .finally(() => setAuthChecked(true));
   }, []);
 
   if (!authChecked) {
     return <p>Lädt …</p>;
+  }
+
+  if (setupRequired) {
+    return (
+      <SetupPage
+        onDone={() => {
+          setSetupRequired(false);
+          setIsAuthenticated(true);
+        }}
+      />
+    );
   }
 
   if (!isAuthenticated) {

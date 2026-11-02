@@ -15,5 +15,7 @@ Wenn `apps/server`/`apps/web` direkt über `pnpm dev`/`node` laufen (wie in den 
 - Stoppen: `pnpm selfhost:down`
 - Danach erreichbar: API/Admin unter `http://localhost:3000` (Admin-UI: `/admin`), öffentliche Seite unter `http://localhost:4321`.
 - Migrationen laufen beim Start von `server` automatisch (`runMigrations()`), kein manueller Schritt nötig.
-- Zugangsdaten sind reine Entwicklungs-Platzhalter (`presscraft`/`presscraft`, Admin-Login `admin@presscraft.local` / `presscraft-dev`), siehe `.env.example` — **vor echtem Einsatz ändern** (z. B. über `ADMIN_EMAIL`/`ADMIN_PASSWORD`-Umgebungsvariablen in `docker-compose.yml`).
+- Die Datenbank-Zugangsdaten (`presscraft`/`presscraft`) sind reine Entwicklungs-Platzhalter — **vor echtem Einsatz ändern**.
+- Es gibt **keinen Standard-Admin**: Beim ersten Aufruf von `/admin` legst du deinen Account im Einrichtungsassistenten an. Wer das automatisieren will, setzt `ADMIN_EMAIL` und `ADMIN_PASSWORD` für den Server-Container.
+- Hochgeladene Medien liegen im Volume `media-data` (`MEDIA_DIR=/data/media`). Hinter einem Reverse Proxy `SERVER_PUBLIC_URL` (Medien-Links) und für die Website `SITE_URL` (Feed/Sitemap) auf die öffentliche Adresse setzen.
 - Die Dockerfiles kopieren bewusst das ganze Repo und bauen alles neu, statt eines größen-optimierten Multi-Stage-Builds — Einfachheit vor Image-Größe für Meilenstein 1 (siehe ADR 0015, Schritt 10).

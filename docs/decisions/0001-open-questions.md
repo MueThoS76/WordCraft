@@ -22,6 +22,7 @@
 - **Minimales Datenmodell** (Users/Groups, Content-Typen, Plugins/Themes, Session-Auth statt JWT): siehe [0013-minimales-datenmodell.md](0013-minimales-datenmodell.md).
 - **API-Verträge** (Block-Dokument-Format, REST-API, Contracts-Pakete, Astro On-Demand-Rendering): siehe [0014-api-vertraege.md](0014-api-vertraege.md).
 - **Implementierungsplan Meilenstein 1** (10 Schritte): siehe [0015-implementierungsplan-meilenstein-1.md](0015-implementierungsplan-meilenstein-1.md) — Schritte 1–8 umgesetzt.
+- **Erweiterungen nach Meilenstein 1** (Medien, Beiträge/Kategorien, Revisionen, Dashboard, Einstellungen/Menü, Design-Editor, Feeds/SEO, Einrichtungsassistent, Block-Validierung): siehe [0018](0018-erweiterungen-nach-meilenstein-1.md).
 - **KI-/MCP-Zugänglichkeit als API-first-Prinzip:** jede Admin-Funktionalität muss vollständig per API nutzbar sein, keine UI-only-Logik — siehe [0016-ki-mcp-zugaenglichkeit.md](0016-ki-mcp-zugaenglichkeit.md).
 
 ## Vorläufig (angenommen, aber noch zu bestätigen)
@@ -64,4 +65,4 @@ Brief Abschnitt 12 ist jetzt vollständig bearbeitet:
 5. ~~API-Verträge zwischen Backend, Editor und Renderer entwerfen.~~ ✅ [0014](0014-api-vertraege.md)
 6. ~~Schrittweisen Implementierungsplan für Meilenstein 1 erstellen.~~ ✅ [0015](0015-implementierungsplan-meilenstein-1.md)
 
-Die Umsetzung von [0015](0015-implementierungsplan-meilenstein-1.md) läuft: Monorepo, Datenbank, `packages/blocks`, `apps/server`-Grundgerüst und die Content-API (Schritte 1–5) sind fertig und verifiziert. Weiter geht's mit Schritt 6 (`packages/renderer` + `apps/web`).
+Die Umsetzung von [0015](0015-implementierungsplan-meilenstein-1.md) ist abgeschlossen (Meilenstein 1 erreicht), ebenso die Userverwaltung ([0017](0017-implementierungsplan-userverwaltung.md)). Danach folgten die Erweiterungen aus [0018](0018-erweiterungen-nach-meilenstein-1.md); dort stehen auch die bekannten Lücken (vor allem Plugin-System, Update-Prüfung und echtes WYSIWYG).

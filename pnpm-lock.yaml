@@ -179,6 +179,9 @@ importers:
       '@presscraft/auth':
         specifier: workspace:*
         version: link:../packages/auth
+      '@presscraft/database':
+        specifier: workspace:^
+        version: link:../packages/database
       '@presscraft/server':
         specifier: workspace:*
         version: link:../apps/server

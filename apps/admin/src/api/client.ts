@@ -55,6 +55,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  setupStatus() {
+    return request<{ setupRequired: boolean }>("/setup/status");
+  },
+  setup(input: { email: string; password: string; siteTitle?: string }) {
+    return request<{ success: true }>("/setup", { method: "POST", body: JSON.stringify(input) });
+  },
   login(email: string, password: string) {
     return request<{ success: true; requiresTwoFactor: boolean }>("/auth/login", {
       method: "POST",

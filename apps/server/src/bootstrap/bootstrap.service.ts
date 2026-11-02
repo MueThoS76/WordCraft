@@ -29,9 +29,11 @@ export class BootstrapService implements OnModuleInit {
 
     const adminGroup = await this.ensureAdminGroup();
     const adminUser = await this.ensureAdminUser();
-    // Idempotent (onConflictDoNothing) — holt auch einen Admin-Account aus
-    // einem Deployment von vor diesem Schritt nachträglich in die Gruppe.
-    await addUserToGroup(this.db, adminUser.id, adminGroup.id);
+    if (adminUser) {
+      // Idempotent (onConflictDoNothing) — holt auch einen Admin-Account aus
+      // einem Deployment von vor diesem Schritt nachträglich in die Gruppe.
+      await addUserToGroup(this.db, adminUser.id, adminGroup.id);
+    }
 
     this.logger.log(
       "Bootstrap abgeschlossen (Content-Typen 'page' und 'post', Core-Capabilities, Administratoren-Gruppe, Admin-Account).",
@@ -49,27 +51,22 @@ export class BootstrapService implements OnModuleInit {
   }
 
   /**
-   * Legt einen ersten Admin-Account an, falls noch keiner existiert.
-   *
-   * ACHTUNG: Das ist ein pragmatischer Platzhalter für Meilenstein 1, kein
-   * echter Einrichtungsassistent (der ist Vision, siehe
-   * docs/vision/feature-roadmap.md). Passwort kommt aus ADMIN_PASSWORD oder
-   * einem unsicheren Dev-Default — vor echtem Einsatz ändern.
+   * Legt den ersten Admin-Account nur an, wenn ADMIN_PASSWORD ausdrücklich
+   * gesetzt ist (Automatisierung, Entwicklung, Tests). Ohne diese Variable
+   * gibt es bewusst KEIN Standardpasswort: Eine frische Installation zeigt
+   * stattdessen den Einrichtungsassistenten (siehe SetupController), in dem
+   * der Betreiber seinen eigenen Admin-Account anlegt.
    */
   private async ensureAdminUser() {
-    const email = process.env.ADMIN_EMAIL ?? "admin@presscraft.local";
+    const password = process.env.ADMIN_PASSWORD || undefined;
+    if (!password) {
+      return undefined;
+    }
+    const email = process.env.ADMIN_EMAIL || "admin@presscraft.local";
     const existing = await getUserByEmail(this.db, email);
     if (existing) {
       return existing;
     }
-
-    const password = process.env.ADMIN_PASSWORD ?? "presscraft-dev";
-    const created = await createUser(this.db, { email, password });
-    this.logger.warn(
-      `Admin-Account "${email}" wurde mit einem Dev-Default-Passwort angelegt. ` +
-        "Vor produktivem Einsatz über ADMIN_PASSWORD ein echtes Passwort setzen " +
-        "oder (sobald vorhanden) den Einrichtungsassistenten nutzen.",
-    );
-    return created;
+    return createUser(this.db, { email, password });
   }
 }

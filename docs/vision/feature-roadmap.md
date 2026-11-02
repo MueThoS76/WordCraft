@@ -4,6 +4,8 @@
 
 Herkunft: Nutzer-Interview vom 2026-11-01, mit [grill-me](../decisions/) durchgesprochen. Jeder Punkt verlinkt die ADR, die die zugrunde liegende Architekturentscheidung dokumentiert — auch wenn die eigentliche _Umsetzung_ des Feature-Punkts noch aussteht.
 
+> **Umsetzungsstand (2026-11-02):** Userverwaltung, Seiten/Beiträge/Medien, Revisionen, Theme-Editor (Konfiguration), Einrichtungsassistent und Dashboard sind in Grundform umgesetzt, siehe [0018](../decisions/0018-erweiterungen-nach-meilenstein-1.md). Offen sind vor allem das Plugin-System, der Marketplace, die Update-Prüfung und die Referenzdokumentation.
+
 ## Userverwaltung
 
 - Users, Gruppen, Capability-System (System + Plugins deklarieren Rechte, Zuweisung nur über Gruppen).

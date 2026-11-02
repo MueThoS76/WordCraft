@@ -31,8 +31,10 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://presscraft:presscraft@postgres:5432/presscraft
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@presscraft.local}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-presscraft-dev}
+      # Ohne ADMIN_PASSWORD gibt es bewusst keinen Standard-Admin: Beim ersten
+      # Aufruf von /admin erscheint der Einrichtungsassistent.
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       # Browser-Origin, von dem aus Cookie-Requests ankommen — im
       # Self-Hosting-Setup derselbe Origin wie der Server selbst, da
       # apps/admin unter /admin mitläuft (ADR 0012/0014).

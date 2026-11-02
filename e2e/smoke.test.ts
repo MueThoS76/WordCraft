@@ -1,4 +1,5 @@
 import { generateTotp } from "@presscraft/auth";
+import { createDb, sql } from "@presscraft/database";
 import { spawn, type ChildProcess } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
@@ -64,6 +65,10 @@ beforeAll(async () => {
       DATABASE_URL,
       PORT: String(SERVER_PORT),
       ADMIN_ORIGIN: WEB_BASE_URL,
+      // Ohne ausdrücklich gesetztes Passwort legt der Server keinen Admin an
+      // (Einrichtungsassistent) — die Tests brauchen aber einen.
+      ADMIN_EMAIL: "admin@presscraft.local",
+      ADMIN_PASSWORD: "presscraft-dev",
       // Eigenes Medienverzeichnis, damit der Test keine echten Uploads berührt.
       MEDIA_DIR: path.join(os.tmpdir(), `presscraft-e2e-media-${process.pid}`),
     },
@@ -736,4 +741,95 @@ describe("Feeds und SEO", () => {
       }
     }
   });
+});
+
+describe("Einrichtungsassistent", () => {
+  it("frische Installation: Setup nötig → Admin anlegen → danach gesperrt, Login funktioniert", async () => {
+    const port = 3102;
+    const base = `http://localhost:${port}/api/v1`;
+    const databaseName = `presscraft_setup_${Date.now()}`;
+    const admin = createDb(DATABASE_URL);
+    await admin.execute(sql.raw(`CREATE DATABASE ${databaseName}`));
+
+    const url = new URL(DATABASE_URL);
+    url.pathname = `/${databaseName}`;
+    const child = spawn("node", ["apps/server/dist/main.js"], {
+      cwd: ROOT,
+      env: {
+        ...process.env,
+        DATABASE_URL: url.toString(),
+        PORT: String(port),
+        ADMIN_ORIGIN: WEB_BASE_URL,
+        // Bewusst leer: kein Standard-Admin, Einrichtung über den Assistenten.
+        ADMIN_PASSWORD: "",
+        ADMIN_EMAIL: "",
+        MEDIA_DIR: path.join(os.tmpdir(), `presscraft-e2e-setup-media-${process.pid}`),
+      },
+      stdio: "pipe",
+    });
+
+    try {
+      await waitForHttp(`${base}/health`, 20000);
+
+      const before = (await (await fetch(`${base}/setup/status`)).json()) as {
+        setupRequired: boolean;
+      };
+      expect(before.setupRequired).toBe(true);
+
+      // Kein Standard-Login möglich.
+      const defaultLogin = await fetch(`${base}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "admin@presscraft.local", password: "presscraft-dev" }),
+      });
+      expect(defaultLogin.status).toBe(401);
+
+      const post = (body: unknown) =>
+        fetch(`${base}/setup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+      expect((await post({ email: "kein-mail", password: "langes-passwort-123" })).status).toBe(
+        400,
+      );
+      expect((await post({ email: "chef@example.com", password: "kurz" })).status).toBe(400);
+
+      const created = await post({
+        email: "chef@example.com",
+        password: "ein-langes-passwort",
+        siteTitle: "Frisch eingerichtet",
+      });
+      expect(created.status).toBe(201);
+
+      const after = (await (await fetch(`${base}/setup/status`)).json()) as {
+        setupRequired: boolean;
+      };
+      expect(after.setupRequired).toBe(false);
+
+      // Ein zweiter Versuch wird abgelehnt — sonst könnte jeder Besucher Admin werden.
+      const second = await post({ email: "zweiter@example.com", password: "noch-ein-passwort" });
+      expect(second.status).toBe(403);
+
+      const login = await fetch(`${base}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "chef@example.com", password: "ein-langes-passwort" }),
+      });
+      expect(login.status).toBe(200);
+      const cookie = login.headers.get("set-cookie")!.split(";")[0];
+
+      // Der neue Account ist wirklich Administrator (darf Einstellungen lesen) …
+      const settings = await fetch(`${base}/settings`, { headers: { Cookie: cookie } });
+      expect(settings.status).toBe(200);
+      expect(((await settings.json()) as { siteTitle: string }).siteTitle).toBe(
+        "Frisch eingerichtet",
+      );
+    } finally {
+      child.kill();
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await admin.execute(sql.raw(`DROP DATABASE IF EXISTS ${databaseName} WITH (FORCE)`));
+      await admin.$client.end();
+    }
+  }, 60000);
 });
