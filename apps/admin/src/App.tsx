@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api/client";
+import { AdminLayout } from "./layout/AdminLayout";
 import { AccountPage } from "./pages/AccountPage";
 import { GroupDetailPage } from "./pages/GroupDetailPage";
 import { GroupsListPage } from "./pages/GroupsListPage";
@@ -8,18 +10,37 @@ import { PageEditorPage } from "./pages/PageEditorPage";
 import { PagesListPage } from "./pages/PagesListPage";
 import { UsersListPage } from "./pages/UsersListPage";
 
-type View =
-  | { name: "list" }
-  | { name: "editor"; id: string }
-  | { name: "users" }
-  | { name: "groups" }
-  | { name: "group-detail"; id: string }
-  | { name: "account" };
+function PagesListRoute() {
+  const navigate = useNavigate();
+  return <PagesListPage onOpen={(id) => navigate(`/pages/${id}`)} />;
+}
+
+function PageEditorRoute() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  if (!id) {
+    return <Navigate to="/pages" replace />;
+  }
+  return <PageEditorPage id={id} onBack={() => navigate("/pages")} />;
+}
+
+function GroupsListRoute() {
+  const navigate = useNavigate();
+  return <GroupsListPage onOpen={(id) => navigate(`/groups/${id}`)} />;
+}
+
+function GroupDetailRoute() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  if (!id) {
+    return <Navigate to="/groups" replace />;
+  }
+  return <GroupDetailPage id={id} onBack={() => navigate("/groups")} />;
+}
 
 export function App() {
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [view, setView] = useState<View>({ name: "list" });
 
   useEffect(() => {
     api
@@ -40,46 +61,20 @@ export function App() {
   async function handleLogout() {
     await api.logout();
     setIsAuthenticated(false);
-    setView({ name: "list" });
-  }
-
-  function renderView() {
-    switch (view.name) {
-      case "editor":
-        return <PageEditorPage id={view.id} onBack={() => setView({ name: "list" })} />;
-      case "users":
-        return <UsersListPage />;
-      case "groups":
-        return <GroupsListPage onOpen={(id) => setView({ name: "group-detail", id })} />;
-      case "group-detail":
-        return <GroupDetailPage id={view.id} onBack={() => setView({ name: "groups" })} />;
-      case "account":
-        return <AccountPage />;
-      default:
-        return <PagesListPage onOpen={(id) => setView({ name: "editor", id })} />;
-    }
   }
 
   return (
-    <>
-      <nav className="top-nav">
-        <button type="button" onClick={() => setView({ name: "list" })}>
-          Seiten
-        </button>
-        <button type="button" onClick={() => setView({ name: "users" })}>
-          Benutzer
-        </button>
-        <button type="button" onClick={() => setView({ name: "groups" })}>
-          Gruppen
-        </button>
-        <button type="button" onClick={() => setView({ name: "account" })}>
-          Mein Account
-        </button>
-        <button type="button" onClick={handleLogout} className="logout-button">
-          Abmelden
-        </button>
-      </nav>
-      {renderView()}
-    </>
+    <Routes>
+      <Route element={<AdminLayout onLogout={handleLogout} />}>
+        <Route index element={<Navigate to="/pages" replace />} />
+        <Route path="pages" element={<PagesListRoute />} />
+        <Route path="pages/:id" element={<PageEditorRoute />} />
+        <Route path="users" element={<UsersListPage />} />
+        <Route path="groups" element={<GroupsListRoute />} />
+        <Route path="groups/:id" element={<GroupDetailRoute />} />
+        <Route path="account" element={<AccountPage />} />
+        <Route path="*" element={<Navigate to="/pages" replace />} />
+      </Route>
+    </Routes>
   );
 }

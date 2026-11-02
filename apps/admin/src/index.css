@@ -1,0 +1,25 @@
+@layer theme, base, legacy, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* Bestehende Seiten (Editor, Listen, Formulare) nutzen noch das alte,
+   bewusst minimale CSS. Es liegt in einer eigenen Ebene unterhalb der
+   Tailwind-Utilities, damit neue Komponenten es per Utility-Klassen
+   überschreiben können und alte Seiten unverändert aussehen. */
+@import "./App.css" layer(legacy);
+
+/* Tailwind-Preflight setzt Überschriften zurück; alte Seiten brauchen sie. */
+@layer legacy {
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 1rem;
+  }
+  h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 1.25rem 0 0.5rem;
+  }
+}
