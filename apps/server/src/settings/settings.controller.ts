@@ -65,13 +65,28 @@ export class SettingsController {
   }
 }
 
+/**
+ * Öffentlich sichtbare Einstellungen — bewusst eine ausdrückliche Liste statt
+ * "alles": Kommt später eine Einstellung dazu, die nicht öffentlich sein soll
+ * (z. B. ein API-Schlüssel eines Plugins), darf sie nicht automatisch hier landen.
+ */
+const PUBLIC_SETTING_KEYS = [
+  "siteTitle",
+  "tagline",
+  "homepage",
+  "navigation",
+  "footerText",
+  "theme",
+] as const;
+
 /** Öffentlich lesbar: Titel, Menü und Startseite braucht jeder Besucher. */
 @Controller("public/settings")
 export class PublicSettingsController {
   constructor(@Inject(DATABASE_CONNECTION) private readonly db: Database) {}
 
   @Get()
-  get() {
-    return getSiteSettings(this.db);
+  async get() {
+    const settings = await getSiteSettings(this.db);
+    return Object.fromEntries(PUBLIC_SETTING_KEYS.map((key) => [key, settings[key]]));
   }
 }
