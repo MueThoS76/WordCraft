@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { Category, ContentItem } from "../api/types";
 import { BlockEditor } from "../editor/BlockEditor";
+import { PagePreview } from "../editor/PagePreview";
 import { RevisionsPanel } from "../editor/RevisionsPanel";
 
 const AUTOSAVE_DELAY_MS = 1000;
@@ -50,6 +51,7 @@ export function ContentEditorPage({
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [mode, setMode] = useState<"edit" | "preview">("edit");
 
   const applyLoaded = useCallback((loaded: ContentItem) => {
     setItem(loaded);
@@ -166,6 +168,26 @@ export function ContentEditorPage({
         <button type="button" onClick={onBack}>
           ← Zur Übersicht
         </button>
+        <div role="tablist" aria-label="Ansicht" className="flex gap-1">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "edit"}
+            className={mode === "edit" ? "font-semibold underline" : ""}
+            onClick={() => setMode("edit")}
+          >
+            Bearbeiten
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "preview"}
+            className={mode === "preview" ? "font-semibold underline" : ""}
+            onClick={() => setMode("preview")}
+          >
+            Vorschau
+          </button>
+        </div>
         <span className="save-state">
           {saveState === "saving"
             ? "Speichert …"
@@ -186,51 +208,68 @@ export function ContentEditorPage({
         </p>
       )}
 
-      <label>
-        Titel
-        <input value={title} onChange={(event) => handleTitleChange(event.target.value)} />
-      </label>
-      <label>
-        Slug
-        <input value={slug} onChange={(event) => handleSlugChange(event.target.value)} />
-      </label>
-
-      {isPost && (
+      {mode === "preview" ? (
+        <PagePreview
+          title={title}
+          blockDocument={blockDocument}
+          meta={
+            isPost
+              ? allCategories
+                  .filter((category) => selectedCategoryIds.includes(category.id))
+                  .map((category) => category.name)
+                  .join(" · ")
+              : undefined
+          }
+        />
+      ) : (
         <>
           <label>
-            Auszug (Kurztext für Übersichten)
-            <textarea
-              rows={3}
-              value={excerpt}
-              onChange={(event) => handleExcerptChange(event.target.value)}
-            />
+            Titel
+            <input value={title} onChange={(event) => handleTitleChange(event.target.value)} />
           </label>
-          <fieldset className="mb-3 rounded border border-slate-300 p-3">
-            <legend className="px-1 text-sm font-semibold">Kategorien</legend>
-            {allCategories.length === 0 ? (
-              <p className="m-0 text-sm text-slate-600">
-                Noch keine Kategorien — lege sie unter „Kategorien“ an.
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-x-4 gap-y-1">
-                {allCategories.map((category) => (
-                  <label key={category.id} className="mb-0 flex items-center gap-2 font-normal">
-                    <input
-                      type="checkbox"
-                      className="m-0 w-auto"
-                      checked={selectedCategoryIds.includes(category.id)}
-                      onChange={() => void handleToggleCategory(category.id)}
-                    />
-                    {category.name}
-                  </label>
-                ))}
-              </div>
-            )}
-          </fieldset>
+          <label>
+            Slug
+            <input value={slug} onChange={(event) => handleSlugChange(event.target.value)} />
+          </label>
+
+          {isPost && (
+            <>
+              <label>
+                Auszug (Kurztext für Übersichten)
+                <textarea
+                  rows={3}
+                  value={excerpt}
+                  onChange={(event) => handleExcerptChange(event.target.value)}
+                />
+              </label>
+              <fieldset className="mb-3 rounded border border-slate-300 p-3">
+                <legend className="px-1 text-sm font-semibold">Kategorien</legend>
+                {allCategories.length === 0 ? (
+                  <p className="m-0 text-sm text-slate-600">
+                    Noch keine Kategorien — lege sie unter „Kategorien“ an.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-x-4 gap-y-1">
+                    {allCategories.map((category) => (
+                      <label key={category.id} className="mb-0 flex items-center gap-2 font-normal">
+                        <input
+                          type="checkbox"
+                          className="m-0 w-auto"
+                          checked={selectedCategoryIds.includes(category.id)}
+                          onChange={() => void handleToggleCategory(category.id)}
+                        />
+                        {category.name}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </fieldset>
+            </>
+          )}
+
+          <BlockEditor blockDocument={blockDocument} onChange={handleBlockDocumentChange} />
         </>
       )}
-
-      <BlockEditor blockDocument={blockDocument} onChange={handleBlockDocumentChange} />
 
       <footer>
         <button type="button" onClick={handlePublish}>

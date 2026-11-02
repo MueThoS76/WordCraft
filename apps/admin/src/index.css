@@ -23,3 +23,84 @@
     margin: 1.25rem 0 0.5rem;
   }
 }
+
+/* Editor-Vorschau: bildet das Layout der öffentlichen Seite nach (Variablen
+   kommen aus dem Theme, siehe PagePreview). Bewusst gebündelt an einer Stelle. */
+.pc-preview {
+  background: var(--pc-bg);
+  color: var(--pc-text);
+  font-family: var(--pc-font);
+  font-size: var(--pc-font-size);
+  line-height: var(--pc-line-height);
+  border: 1px solid var(--pc-border);
+  border-radius: var(--pc-radius);
+  overflow: hidden;
+}
+.pc-preview-page {
+  max-width: var(--pc-content-width);
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+.pc-preview h1,
+.pc-preview h2,
+.pc-preview h3 {
+  margin: 1rem 0 0.5rem;
+  line-height: 1.25;
+}
+.pc-preview a {
+  color: var(--pc-primary);
+}
+.pc-preview-meta {
+  color: var(--pc-muted);
+  font-size: 0.9rem;
+}
+.pc-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--pc-radius);
+}
+.pc-preview blockquote {
+  margin: 1.5rem 0;
+  padding: 0.25rem 1rem;
+  border-left: 4px solid var(--pc-primary);
+  background: var(--pc-surface);
+  border-radius: 0 var(--pc-radius) var(--pc-radius) 0;
+}
+.pc-preview blockquote footer {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--pc-muted);
+  font-size: 0.9rem;
+}
+.pc-preview hr {
+  border: 0;
+  border-top: 1px solid var(--pc-border);
+  margin: 2rem 0;
+}
+.pc-preview .pc-button {
+  display: inline-block;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--pc-radius);
+  border: 2px solid var(--pc-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+.pc-preview .pc-button-primary {
+  background: var(--pc-primary);
+  color: var(--pc-bg);
+}
+.pc-preview .pc-button-outline {
+  background: transparent;
+  color: var(--pc-primary);
+}
+/* Tailwind-Preflight entfernt Listenzeichen; die öffentliche Seite hat sie. */
+.pc-preview ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+.pc-preview ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}

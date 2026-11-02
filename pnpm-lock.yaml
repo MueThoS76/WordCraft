@@ -38,6 +38,9 @@ importers:
       '@presscraft/blocks':
         specifier: workspace:*
         version: link:../../packages/blocks
+      '@presscraft/renderer':
+        specifier: workspace:^
+        version: link:../../packages/renderer
       '@presscraft/shared':
         specifier: workspace:*
         version: link:../../packages/shared

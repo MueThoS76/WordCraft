@@ -20,9 +20,16 @@ Nach Meilenstein 1 (Seiten) und der Userverwaltung ([0017](0017-implementierungs
 | **Weitere Blöcke**               | Liste, Zitat, Trennlinie, Button; Drag-and-drop zum Umsortieren (natives HTML5, keine neue Abhängigkeit).                                                                                                                                                                            |
 | **Design-Editor**                | `theme-sdk` definiert ein Theme als streng validierte Konfiguration (Hex-Farben, Schrift aus fester Liste, Zahlenbereiche) → sichere CSS-Variablen ([0007](0007-theme-vs-plugin-abgrenzung.md)). Presets, Kontrastwarnung (WCAG), Live-Vorschau. Kein Freitext-CSS.                  |
 | **Feeds und SEO**                | `/feed.xml`, `/sitemap.xml`, `/robots.txt`, Meta-Description, Open-Graph-Tags. Basis-URL über `SITE_URL`.                                                                                                                                                                            |
+| **Suche**                        | Volltextsuche (Titel, Auszug, Inhalt) über veröffentlichte Seiten und Beiträge, Titeltreffer zuerst, LIKE-Platzhalter maskiert. Astro-Seite `/suche` mit Auszug und Paging, Suchfeld in der Kopfzeile. Bewusst ILIKE statt Postgres-Volltextindex.                                   |
+| **Rate-Limiting**                | Login, 2FA und Einrichtung: zeitfensterbasierter Zähler pro IP im Speicher (Standard 10 Versuche/Minute, `LOGIN_RATE_LIMIT`, 0 = aus), 429 bei Überschreitung. `TRUST_PROXY=true` hinter einem Reverse Proxy. Session-Cookie ist unter `https://` `secure`.                          |
+| **Editor-Vorschau**              | Umschalter Bearbeiten/Vorschau, rendert mit demselben Renderer wie die öffentliche Seite und dem gespeicherten Theme.                                                                                                                                                                |
 | **Einrichtungsassistent**        | **Kein Standard-Admin mehr**: Ohne gesetztes `ADMIN_PASSWORD` legt der Server keinen Account an, `/admin` zeigt stattdessen die Einrichtung (Passwort mind. 12 Zeichen). `POST /setup` funktioniert nur, solange kein User existiert, danach 403. Compose setzt keinen Default mehr. |
 
 ## Entscheidungen im Detail
+
+- **Admin-Deep-Links im Produktionsbetrieb:** Mit echten URLs im Admin (`/admin/posts`) muss der Server bei einem Reload `index.html` ausliefern. Das geschieht im globalen Exception-Filter (404 unter `/admin/` ohne Dateiendung), weil Nest seinen eigenen 404-Handler setzt und `setNotFoundHandler` deshalb nicht verfügbar ist. Assets und Pfade außerhalb von `/admin` bleiben ein 404.
+- **Docker baut über Turbo** (`--filter="@presscraft/server^..."`) statt über eine feste Paketliste. Die alte Liste kannte `shared`, `theme-sdk` und `media` nicht und hätte das Image-Build zerbrochen. Geprüft in einem frischen Klon mit frozen Lockfile (Docker selbst war in der Arbeitsumgebung nicht verfügbar).
+- **Slugs:** `slugify` liegt in `@presscraft/shared` (Admin und Server nutzen es), doppelte Slugs liefern 409 statt 500, beim Anlegen wird der Slug aus dem Titel abgeleitet.
 
 - **`apps/server` darf `theme-sdk` importieren** (nur zur Validierung der Theme-Konfiguration beim Speichern). Das war in [0012](0012-monorepo-struktur.md) nicht vorgesehen und wurde dort ergänzt. Der Kern (`content`) bleibt frei von `theme-sdk` und speichert das Theme nur als opake JSON-Einstellung.
 - **Validierung an zwei Stellen** bei allem, was ins HTML oder CSS der öffentlichen Seite fließt (Menü-Links, Theme, Button-Links): beim Schreiben im Server und beim Lesen im Frontend. Eine kaputte oder manipulierte Einstellung darf die öffentliche Seite weder unsicher noch unbenutzbar machen.
@@ -35,5 +42,6 @@ Nach Meilenstein 1 (Seiten) und der Userverwaltung ([0017](0017-implementierungs
 - Update-Prüfung und optionale Installations-Statistik ([0010](0010-updates-und-telemetrie.md)) fehlen noch.
 - Block-Editor arbeitet mit Formularen pro Block, nicht mit direkter Bearbeitung auf der Seite (kein echtes WYSIWYG).
 - Keine Seiten-Hierarchie, keine Kommentare, keine Suche, keine zeitgesteuerte Veröffentlichung, keine Mehrsprachigkeit.
-- Rate-Limiting für Login und Einrichtung fehlt.
+- Rate-Limiting gilt pro Server-Instanz (Speicher), nicht über mehrere Instanzen hinweg.
+- Docker-Images wurden nicht gebaut (kein Docker in der Arbeitsumgebung); die Buildschritte wurden einzeln in einem frischen Klon geprüft.
 - Die Revisionen speichern Inhalt und Feldwerte, aber nicht Titel und Slug.
