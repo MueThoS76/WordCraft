@@ -7,12 +7,14 @@ import {
   Get,
   Inject,
   Post,
+  UseGuards,
 } from "@nestjs/common";
 import { addUserToGroup, createUser, getGroupByName } from "@presscraft/auth";
 import { updateSiteSettings } from "@presscraft/content";
 import { count, users, type Database } from "@presscraft/database";
 import { z } from "zod";
 import { ADMIN_GROUP_NAME } from "../auth/core-capabilities.js";
+import { RateLimit, RateLimitGuard } from "../common/rate-limit.guard.js";
 import { hasPgErrorCode } from "../common/pg-error.js";
 import { DATABASE_CONNECTION } from "../database/database.module.js";
 
@@ -47,6 +49,8 @@ export class SetupController {
   }
 
   @Post()
+  @UseGuards(RateLimitGuard)
+  @RateLimit({ limit: 10, windowMs: 60_000 })
   async setup(@Body() body: unknown) {
     const parsed = setupSchema.safeParse(body);
     if (!parsed.success) {

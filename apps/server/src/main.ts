@@ -26,7 +26,10 @@ async function bootstrap(): Promise<void> {
   // ohne dass ein manueller Migrationsschritt nötig wäre (ADR 0015, Schritt 10).
   await runMigrations(connectionString);
 
-  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter({ trustProxy: process.env.TRUST_PROXY === "true" }),
+  );
   await app.register(fastifyCookie);
   await app.register(fastifyMultipart, { limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 } });
   // Cookie-basierte Session-Auth braucht CORS mit konkretem Origin statt "*"

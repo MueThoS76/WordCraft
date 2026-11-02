@@ -8,11 +8,13 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  UseGuards,
 } from "@nestjs/common";
 import { completeTwoFactorLogin, deleteSession, login } from "@presscraft/auth";
 import type { Database } from "@presscraft/database";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { z, ZodError } from "zod";
+import { loginRateLimit, RateLimit, RateLimitGuard } from "../common/rate-limit.guard.js";
 import { DATABASE_CONNECTION } from "../database/database.module.js";
 import { SESSION_COOKIE_NAME } from "./session-cookie.js";
 import { totpCodeSchema } from "./two-factor.dto.js";
@@ -28,6 +30,8 @@ export class AuthController {
 
   @Post("login")
   @HttpCode(200)
+  @UseGuards(RateLimitGuard)
+  @RateLimit(loginRateLimit())
   async login(@Body() body: unknown, @Res({ passthrough: true }) reply: FastifyReply) {
     const { email, password } = this.parse(loginSchema, body);
     const result = await login(this.db, email, password);
@@ -40,7 +44,8 @@ export class AuthController {
       path: "/",
       sameSite: "lax",
       expires: result.expiresAt,
-      // TODO: secure: true, sobald der Server hinter HTTPS läuft (Schritt 10).
+      // Nur über HTTPS senden, sobald die öffentliche Adresse https:// ist.
+      secure: (process.env.PUBLIC_URL ?? process.env.ADMIN_ORIGIN ?? "").startsWith("https://"),
     });
 
     // Bei requiresTwoFactor=true ist die Session absichtlich noch nicht
@@ -51,6 +56,8 @@ export class AuthController {
 
   @Post("login/2fa")
   @HttpCode(200)
+  @UseGuards(RateLimitGuard)
+  @RateLimit(loginRateLimit())
   async loginTwoFactor(@Req() request: FastifyRequest, @Body() body: unknown) {
     const { code } = this.parse(totpCodeSchema, body);
     const sessionId = request.cookies?.[SESSION_COOKIE_NAME];

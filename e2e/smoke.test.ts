@@ -69,6 +69,8 @@ beforeAll(async () => {
       // (Einrichtungsassistent) — die Tests brauchen aber einen.
       ADMIN_EMAIL: "admin@presscraft.local",
       ADMIN_PASSWORD: "presscraft-dev",
+      // Die Tests melden sich oft an — Rate-Limit hier aus (separat getestet).
+      LOGIN_RATE_LIMIT: "0",
       // Eigenes Medienverzeichnis, damit der Test keine echten Uploads berührt.
       MEDIA_DIR: path.join(os.tmpdir(), `presscraft-e2e-media-${process.pid}`),
     },
@@ -763,6 +765,8 @@ describe("Einrichtungsassistent", () => {
         // Bewusst leer: kein Standard-Admin, Einrichtung über den Assistenten.
         ADMIN_PASSWORD: "",
         ADMIN_EMAIL: "",
+        // Knappes Limit, um das Rate-Limiting zu prüfen.
+        LOGIN_RATE_LIMIT: "5",
         MEDIA_DIR: path.join(os.tmpdir(), `presscraft-e2e-setup-media-${process.pid}`),
       },
       stdio: "pipe",
@@ -818,6 +822,19 @@ describe("Einrichtungsassistent", () => {
       });
       expect(login.status).toBe(200);
       const cookie = login.headers.get("set-cookie")!.split(";")[0];
+
+      // Rate-Limit: bisher zwei Login-Versuche (Standard-Login, richtiger Login);
+      // die nächsten drei falschen werden noch beantwortet (401), der sechste Versuch nicht mehr (429).
+      const wrongStatuses: number[] = [];
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        const wrong = await fetch(`${base}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: "chef@example.com", password: "falsches-passwort" }),
+        });
+        wrongStatuses.push(wrong.status);
+      }
+      expect(wrongStatuses).toEqual([401, 401, 401, 429]);
 
       // Der neue Account ist wirklich Administrator (darf Einstellungen lesen) …
       const settings = await fetch(`${base}/settings`, { headers: { Cookie: cookie } });
