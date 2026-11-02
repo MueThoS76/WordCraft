@@ -62,3 +62,48 @@ export function parsePage(value: string | null): number {
   const page = Number(value);
   return Number.isInteger(page) && page >= 1 ? page : 1;
 }
+
+export interface NavigationItem {
+  label: string;
+  url: string;
+}
+
+export interface SiteSettings {
+  siteTitle: string;
+  tagline: string;
+  homepage: string;
+  navigation: NavigationItem[];
+  footerText: string;
+}
+
+export const DEFAULT_SETTINGS: SiteSettings = {
+  siteTitle: "PressCraft",
+  tagline: "",
+  homepage: "blog",
+  navigation: [
+    { label: "Start", url: "/" },
+    { label: "Blog", url: "/blog" },
+  ],
+  footerText: "",
+};
+
+/** Zweite Verteidigungslinie: nur relative Pfade und http(s)-Links ins Menü lassen. */
+export function isSafeUrl(url: string): boolean {
+  if (url.startsWith("//")) {
+    return false;
+  }
+  return /^\/[^\s]*$/.test(url) || /^https?:\/\/[^\s]+$/i.test(url);
+}
+
+export async function fetchSettings(): Promise<SiteSettings> {
+  try {
+    const response = await fetch(`${apiBaseUrl}/public/settings`);
+    if (!response.ok) {
+      return DEFAULT_SETTINGS;
+    }
+    const settings = (await response.json()) as SiteSettings;
+    return { ...settings, navigation: settings.navigation.filter((item) => isSafeUrl(item.url)) };
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}

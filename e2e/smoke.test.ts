@@ -514,3 +514,57 @@ describe("Dashboard", () => {
     }
   });
 });
+
+describe("Einstellungen und Navigation", () => {
+  it("Titel, Menü und Startseite wirken öffentlich; unsichere Links werden abgelehnt", async () => {
+    const login = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "admin@presscraft.local", password: "presscraft-dev" }),
+    });
+    const cookie = login.headers.get("set-cookie")!.split(";")[0];
+    const json = { "Content-Type": "application/json", Cookie: cookie };
+
+    const original = await (await fetch(`${API_BASE_URL}/settings`, { headers: json })).json();
+    try {
+      const unique = `E2E-Titel-${Date.now()}`;
+      const rejected = await fetch(`${API_BASE_URL}/settings`, {
+        method: "PATCH",
+        headers: json,
+        body: JSON.stringify({ navigation: [{ label: "böse", url: "javascript:alert(1)" }] }),
+      });
+      expect(rejected.status).toBe(400);
+
+      const saved = await fetch(`${API_BASE_URL}/settings`, {
+        method: "PATCH",
+        headers: json,
+        body: JSON.stringify({
+          siteTitle: unique,
+          homepage: "blog",
+          navigation: [{ label: "E2E-Menüpunkt", url: "/blog" }],
+          footerText: "E2E-Fußzeile",
+        }),
+      });
+      expect(saved.ok).toBe(true);
+
+      const publicSettings = (await (await fetch(`${API_BASE_URL}/public/settings`)).json()) as {
+        siteTitle: string;
+      };
+      expect(publicSettings.siteTitle).toBe(unique);
+
+      const homeHtml = await fetch(`${WEB_BASE_URL}/`).then((response) => response.text());
+      expect(homeHtml).toContain(unique);
+      expect(homeHtml).toContain("E2E-Menüpunkt");
+      expect(homeHtml).toContain("E2E-Fußzeile");
+
+      const anonymous = await fetch(`${API_BASE_URL}/settings`);
+      expect(anonymous.status).toBe(401);
+    } finally {
+      await fetch(`${API_BASE_URL}/settings`, {
+        method: "PATCH",
+        headers: json,
+        body: JSON.stringify(original),
+      });
+    }
+  });
+});

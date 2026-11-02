@@ -33,6 +33,7 @@ export const navigation: NavSection[] = [
       { key: "posts", label: "Beiträge", to: "/posts", icon: "📝" },
       { key: "categories", label: "Kategorien", to: "/categories", icon: "🏷️" },
       { key: "media", label: "Medien", to: "/media", icon: "🖼️" },
+      { key: "menu", label: "Menü", to: "/menu", icon: "🧭" },
     ],
   },
   {
@@ -46,6 +47,9 @@ export const navigation: NavSection[] = [
   {
     key: "system",
     label: "System",
-    items: [{ key: "account", label: "Mein Account", to: "/account", icon: "⚙️" }],
+    items: [
+      { key: "settings", label: "Einstellungen", to: "/settings", icon: "🛠️" },
+      { key: "account", label: "Mein Account", to: "/account", icon: "⚙️" },
+    ],
   },
 ];

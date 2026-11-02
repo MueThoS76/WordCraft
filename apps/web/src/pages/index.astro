@@ -1,0 +1,53 @@
+---
+import type { BlockDocument } from "@presscraft/blocks";
+import { BlockDocumentRenderer } from "@presscraft/renderer";
+import PostListView from "../components/PostListView.astro";
+import Base from "../layouts/Base.astro";
+import { apiBaseUrl, fetchCategories, fetchPosts, fetchSettings, parsePage } from "../lib/api";
+
+interface PublishedPage {
+  title: string;
+  publishedBlockBody: BlockDocument | null;
+}
+
+const settings = await fetchSettings();
+const showBlog = settings.homepage === "blog";
+
+let page: PublishedPage | null = null;
+if (!showBlog) {
+  const response = await fetch(`${apiBaseUrl}/public/content/page/${settings.homepage}`);
+  page = response.ok ? await response.json() : null;
+}
+
+const currentPage = parsePage(Astro.url.searchParams.get("seite"));
+const [list, categories] = showBlog
+  ? await Promise.all([fetchPosts({ page: currentPage }), fetchCategories()])
+  : [{ items: [], total: 0 }, []];
+---
+
+<Base title={settings.siteTitle} isHome>
+  {
+    showBlog ? (
+      <>
+        <h1>Neueste Beiträge</h1>
+        {categories.length > 0 && (
+          <p>
+            {categories.map((category) => (
+              <a class="category-chip" href={`/kategorie/${category.slug}`}>
+                {category.name} ({category.itemCount})
+              </a>
+            ))}
+          </p>
+        )}
+        <PostListView list={list} page={currentPage} basePath="/" />
+      </>
+    ) : page ? (
+      <>
+        <h1>{page.title}</h1>
+        {page.publishedBlockBody && <BlockDocumentRenderer document={page.publishedBlockBody} />}
+      </>
+    ) : (
+      <p>Die Startseite ist noch nicht eingerichtet.</p>
+    )
+  }
+</Base>

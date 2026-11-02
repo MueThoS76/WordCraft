@@ -12,6 +12,7 @@ import type {
   MediaItem,
   Me,
   RevisionSummary,
+  SiteSettings,
 } from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000/api/v1";
@@ -68,6 +69,12 @@ export const api = {
   },
   logout() {
     return request<{ success: true }>("/auth/logout", { method: "POST" });
+  },
+  getSettings() {
+    return request<SiteSettings>("/settings");
+  },
+  updateSettings(input: Partial<SiteSettings>) {
+    return request<SiteSettings>("/settings", { method: "PATCH", body: JSON.stringify(input) });
   },
   dashboard() {
     return request<DashboardData>("/dashboard");

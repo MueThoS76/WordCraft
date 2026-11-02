@@ -10,6 +10,7 @@
 export const CAPABILITY_CONTENT_MANAGE = "content.manage";
 export const CAPABILITY_USERS_MANAGE = "users.manage";
 export const CAPABILITY_MEDIA_MANAGE = "media.manage";
+export const CAPABILITY_SETTINGS_MANAGE = "settings.manage";
 
 export const CORE_CAPABILITIES = [
   {
@@ -23,6 +24,10 @@ export const CORE_CAPABILITIES = [
   {
     id: CAPABILITY_MEDIA_MANAGE,
     description: "Medien hochladen, beschreiben und löschen.",
+  },
+  {
+    id: CAPABILITY_SETTINGS_MANAGE,
+    description: "Website-Einstellungen und Navigationsmenü ändern.",
   },
 ];
 

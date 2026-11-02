@@ -3,6 +3,8 @@ import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-do
 import { api } from "./api/client";
 import { AdminLayout } from "./layout/AdminLayout";
 import { AccountPage } from "./pages/AccountPage";
+import { MenuPage } from "./pages/MenuPage";
+import { SettingsPage } from "./pages/SettingsPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { CategoriesPage } from "./pages/CategoriesPage";
 import { ContentEditorPage } from "./pages/ContentEditorPage";
@@ -112,6 +114,8 @@ export function App() {
         />
         <Route path="posts/:id" element={<ContentEditorRoute typeId="post" basePath="/posts" />} />
         <Route path="categories" element={<CategoriesPage />} />
+        <Route path="menu" element={<MenuPage />} />
+        <Route path="settings" element={<SettingsPage />} />
         <Route path="media" element={<MediaPage />} />
         <Route path="users" element={<UsersListPage />} />
         <Route path="groups" element={<GroupsListRoute />} />

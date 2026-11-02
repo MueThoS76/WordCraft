@@ -125,3 +125,17 @@ export interface DashboardData {
   media: { count: number; totalBytes: number } | null;
   users: { users: number; groups: number } | null;
 }
+
+export interface NavigationItem {
+  label: string;
+  url: string;
+}
+
+export interface SiteSettings {
+  siteTitle: string;
+  tagline: string;
+  /** "blog" oder der Slug einer veröffentlichten Seite. */
+  homepage: string;
+  navigation: NavigationItem[];
+  footerText: string;
+}
