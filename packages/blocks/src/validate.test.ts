@@ -83,4 +83,48 @@ describe("validateBlockDocument", () => {
   it("rejects a structurally invalid document", () => {
     expect(() => validateBlockDocument({ blocks: [] }, registry)).toThrow();
   });
+
+  it("validiert die neuen Block-Typen und lehnt unsichere URLs ab", () => {
+    const ok: BlockDocument = {
+      schemaVersion: 1,
+      blocks: [
+        {
+          id: "123e4567-e89b-12d3-a456-426614174010",
+          type: "core/list",
+          attributes: { ordered: true, items: ["eins", "zwei"] },
+        },
+        {
+          id: "123e4567-e89b-12d3-a456-426614174011",
+          type: "core/quote",
+          attributes: { text: "Zitat", cite: "Jemand" },
+        },
+        { id: "123e4567-e89b-12d3-a456-426614174012", type: "core/divider", attributes: {} },
+        {
+          id: "123e4567-e89b-12d3-a456-426614174013",
+          type: "core/button",
+          attributes: { label: "Los", url: "/kontakt", style: "outline" },
+        },
+        {
+          id: "123e4567-e89b-12d3-a456-426614174014",
+          type: "core/image",
+          attributes: { src: "", alt: "" },
+        },
+      ],
+    };
+    expect(() => validateBlockDocument(ok, registry)).not.toThrow();
+
+    for (const url of ["javascript:alert(1)", "data:text/html,x", "//evil.example"]) {
+      const bad = {
+        schemaVersion: 1,
+        blocks: [
+          {
+            id: "123e4567-e89b-12d3-a456-426614174015",
+            type: "core/button",
+            attributes: { label: "x", url },
+          },
+        ],
+      };
+      expect(() => validateBlockDocument(bad, registry)).toThrow();
+    }
+  });
 });

@@ -27,6 +27,11 @@ import {
   publishContentItem,
   unpublishContentItem,
 } from "@presscraft/content";
+import {
+  createCoreBlockRegistry,
+  UnknownBlockTypeError,
+  validateBlockDocument,
+} from "@presscraft/blocks";
 import type { Database } from "@presscraft/database";
 import { z, ZodError } from "zod";
 import { CapabilityGuard, RequireCapability } from "../auth/capability.guard.js";
@@ -39,6 +44,8 @@ import {
   setCategoriesSchema,
   updateContentItemSchema,
 } from "./content-item.dto.js";
+
+const blockRegistry = createCoreBlockRegistry();
 
 @Controller("content/:typeId")
 @UseGuards(SessionGuard, CapabilityGuard)
@@ -98,6 +105,7 @@ export class ContentItemsController {
     @Req() request: AuthenticatedRequest,
   ) {
     const input = this.parse(updateContentItemSchema, body);
+    this.validateBlocks(input.blockBody);
     const item = await saveContentItem(this.db, id, input, request.userId);
     if (!item) {
       throw new NotFoundException("Content-Item nicht gefunden.");
@@ -156,6 +164,31 @@ export class ContentItemsController {
       throw new NotFoundException("Content-Item nicht gefunden.");
     }
     return item;
+  }
+
+  /**
+   * Prüft jeden Block gegen das Attribut-Schema seines Typs (ADR 0014), nicht
+   * nur die Dokumentstruktur — sonst könnten z. B. unsichere Link-Ziele
+   * über die API gespeichert werden.
+   */
+  private validateBlocks(blockBody: unknown): void {
+    if (blockBody === undefined) {
+      return;
+    }
+    try {
+      validateBlockDocument(blockBody, blockRegistry);
+    } catch (error) {
+      if (error instanceof UnknownBlockTypeError) {
+        throw new BadRequestException(error.message);
+      }
+      if (error instanceof ZodError) {
+        throw new BadRequestException(
+          "Ungültiger Block: " +
+            error.issues.map((issue) => `${issue.path.join(".")} ${issue.message}`).join(", "),
+        );
+      }
+      throw error;
+    }
   }
 
   private parse<T>(schema: z.ZodType<T>, body: unknown): T {

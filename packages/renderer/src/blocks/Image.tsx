@@ -1,6 +1,9 @@
 import type { ImageAttributes } from "@presscraft/blocks";
 
 export function Image({ src, alt, caption }: ImageAttributes) {
+  if (!src) {
+    return null;
+  }
   if (caption) {
     return (
       <figure>

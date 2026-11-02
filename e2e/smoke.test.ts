@@ -568,3 +568,55 @@ describe("Einstellungen und Navigation", () => {
     }
   });
 });
+
+describe("Block-Validierung", () => {
+  it("speichert gültige Blöcke, lehnt unsichere Links und unbekannte Typen ab", async () => {
+    const login = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "admin@presscraft.local", password: "presscraft-dev" }),
+    });
+    const cookie = login.headers.get("set-cookie")!.split(";")[0];
+    const json = { "Content-Type": "application/json", Cookie: cookie };
+
+    const created = await fetch(`${API_BASE_URL}/content/page`, {
+      method: "POST",
+      headers: json,
+      body: JSON.stringify({ slug: `e2e-blocks-${Date.now()}`, title: "Blöcke" }),
+    });
+    const page = (await created.json()) as { id: string };
+    const save = (blocks: unknown[]) =>
+      fetch(`${API_BASE_URL}/content/page/${page.id}`, {
+        method: "PATCH",
+        headers: json,
+        body: JSON.stringify({ blockBody: { schemaVersion: 1, blocks } }),
+      });
+    const block = (suffix: string, type: string, attributes: Record<string, unknown>) => ({
+      id: `123e4567-e89b-12d3-a456-4266141740${suffix}`,
+      type,
+      attributes,
+    });
+
+    const valid = await save([
+      block("01", "core/list", { ordered: false, items: ["a", "b"] }),
+      block("02", "core/quote", { text: "Zitat" }),
+      block("03", "core/divider", {}),
+      block("04", "core/button", { label: "Los", url: "/blog" }),
+      block("05", "core/image", { src: "", alt: "" }),
+    ]);
+    expect(valid.status).toBe(200);
+
+    const unsafe = await save([
+      block("06", "core/button", { label: "böse", url: "javascript:alert(1)" }),
+    ]);
+    expect(unsafe.status).toBe(400);
+
+    const unknown = await save([block("07", "plugin/gibtsnicht", {})]);
+    expect(unknown.status).toBe(400);
+
+    await fetch(`${API_BASE_URL}/content/page/${page.id}`, {
+      method: "DELETE",
+      headers: { Cookie: cookie },
+    });
+  });
+});
