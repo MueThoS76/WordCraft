@@ -19,6 +19,7 @@ import {
   listCategoriesWithCounts,
   listPublicCategories,
   listPublishedSlugs,
+  searchPublished,
   listPublishedItems,
   updateCategory,
 } from "@presscraft/content";
@@ -119,6 +120,16 @@ export class PublicListingController {
   @Get("categories")
   categories() {
     return listPublicCategories(this.db, "post");
+  }
+
+  /** Volltextsuche über veröffentlichte Seiten und Beiträge. */
+  @Get("search")
+  search(@Query("q") q?: string, @Query("limit") limit?: string, @Query("offset") offset?: string) {
+    return searchPublished(this.db, {
+      query: q ?? "",
+      limit: limit ? Number(limit) : undefined,
+      offset: offset ? Number(offset) : undefined,
+    });
   }
 
   /** Alles, was die Sitemap braucht — nur Veröffentlichtes. */

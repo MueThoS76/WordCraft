@@ -110,3 +110,32 @@ export async function fetchSettings(): Promise<SiteSettings> {
     return DEFAULT_SETTINGS;
   }
 }
+
+export interface SearchHit {
+  id: string;
+  contentTypeId: string;
+  slug: string;
+  title: string;
+  publishedAt: string | null;
+  snippet: string;
+}
+
+export interface SearchResult {
+  items: SearchHit[];
+  total: number;
+}
+
+export async function fetchSearch(query: string, page: number): Promise<SearchResult> {
+  const params = new URLSearchParams({
+    q: query,
+    limit: String(POSTS_PER_PAGE),
+    offset: String((page - 1) * POSTS_PER_PAGE),
+  });
+  const response = await fetch(`${apiBaseUrl}/public/search?${params}`);
+  return response.ok ? ((await response.json()) as SearchResult) : { items: [], total: 0 };
+}
+
+/** Öffentliche Adresse eines Treffers je nach Content-Typ. */
+export function hitPath(hit: SearchHit): string {
+  return hit.contentTypeId === "post" ? `/blog/${hit.slug}` : `/${hit.slug}`;
+}

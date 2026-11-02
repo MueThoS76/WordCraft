@@ -1,0 +1,56 @@
+---
+import Base from "../layouts/Base.astro";
+import { POSTS_PER_PAGE, fetchSearch, formatDate, hitPath, parsePage } from "../lib/api";
+
+const query = (Astro.url.searchParams.get("q") ?? "").trim().slice(0, 100);
+const page = parsePage(Astro.url.searchParams.get("seite"));
+const tooShort = query.length > 0 && query.length < 2;
+const result = query.length >= 2 ? await fetchSearch(query, page) : { items: [], total: 0 };
+const lastPage = Math.max(1, Math.ceil(result.total / POSTS_PER_PAGE));
+const pagerBase = `/suche?q=${encodeURIComponent(query)}`;
+---
+
+<Base title={query ? `Suche: ${query}` : "Suche"}>
+  <h1>Suche</h1>
+  <form action="/suche" method="get" role="search">
+    <input type="search" name="q" value={query} placeholder="Suchbegriff" maxlength="100" />
+    <button type="submit">Suchen</button>
+  </form>
+
+  {tooShort && <p>Bitte gib mindestens 2 Zeichen ein.</p>}
+  {
+    query.length >= 2 && (
+      <p class="post-meta">
+        {result.total === 0
+          ? `Keine Treffer für „${query}“.`
+          : `${result.total} ${result.total === 1 ? "Treffer" : "Treffer"} für „${query}“`}
+      </p>
+    )
+  }
+
+  <ul class="post-list">
+    {
+      result.items.map((hit) => (
+        <li>
+          <h2>
+            <a href={hitPath(hit)}>{hit.title}</a>
+          </h2>
+          <p class="post-meta">
+            {hit.contentTypeId === "post" ? "Beitrag" : "Seite"}
+            {hit.publishedAt && ` · ${formatDate(hit.publishedAt)}`}
+          </p>
+          {hit.snippet && <p>{hit.snippet}</p>}
+        </li>
+      ))
+    }
+  </ul>
+
+  {
+    lastPage > 1 && (
+      <nav class="pager" aria-label="Seiten">
+        {page > 1 ? <a href={`${pagerBase}&seite=${page - 1}`}>← Zurück</a> : <span />}
+        {page < lastPage ? <a href={`${pagerBase}&seite=${page + 1}`}>Weiter →</a> : <span />}
+      </nav>
+    )
+  }
+</Base>

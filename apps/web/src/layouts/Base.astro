@@ -72,6 +72,20 @@ const headerClass = theme.layout.headerStyle === "centered" ? "header-centered" 
       .site-title {
         font-size: 1.15rem;
       }
+      .site-search {
+        display: inline-block;
+        margin-left: 1rem;
+      }
+      .site-search input {
+        padding: 0.25rem 0.6rem;
+        border: 1px solid var(--pc-border);
+        border-radius: var(--pc-radius);
+        background: var(--pc-bg);
+        color: var(--pc-text);
+        font: inherit;
+        font-size: 0.9rem;
+        width: 9rem;
+      }
       .site-tagline {
         max-width: var(--pc-content-width);
         margin: -0.5rem auto 0;
@@ -163,6 +177,9 @@ const headerClass = theme.layout.headerStyle === "centered" ? "header-centered" 
       <nav>
         <a class="site-title" href="/">{settings.siteTitle}</a>
         {settings.navigation.map((item) => <a href={item.url}>{item.label}</a>)}
+        <form class="site-search" action="/suche" method="get" role="search">
+          <input type="search" name="q" placeholder="Suchen …" aria-label="Suchen" maxlength="100" />
+        </form>
       </nav>
       {settings.tagline && <p class="site-tagline">{settings.tagline}</p>}
     </header>

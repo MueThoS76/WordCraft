@@ -850,3 +850,91 @@ describe("Einrichtungsassistent", () => {
     }
   }, 60000);
 });
+
+describe("Suche", () => {
+  it("findet Veröffentlichtes über API und Webseite, nie Entwürfe, und maskiert die Eingabe", async () => {
+    const login = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "admin@presscraft.local", password: "presscraft-dev" }),
+    });
+    const cookie = login.headers.get("set-cookie")!.split(";")[0];
+    const json = { "Content-Type": "application/json", Cookie: cookie };
+    const word = `Suchwort${Date.now()}`;
+
+    const create = async (type: string, slug: string, title: string, publish: boolean) => {
+      const response = await fetch(`${API_BASE_URL}/content/${type}`, {
+        method: "POST",
+        headers: json,
+        body: JSON.stringify({ slug, title }),
+      });
+      const item = (await response.json()) as { id: string };
+      await fetch(`${API_BASE_URL}/content/${type}/${item.id}`, {
+        method: "PATCH",
+        headers: json,
+        body: JSON.stringify({
+          blockBody: {
+            schemaVersion: 1,
+            blocks: [
+              {
+                id: "123e4567-e89b-12d3-a456-426614174099",
+                type: "core/paragraph",
+                attributes: { text: `Im Inhalt steht ${word} irgendwo.` },
+              },
+            ],
+          },
+        }),
+      });
+      if (publish) {
+        await fetch(`${API_BASE_URL}/content/${type}/${item.id}/publish`, {
+          method: "POST",
+          headers: { Cookie: cookie },
+        });
+      }
+      return { type, id: item.id };
+    };
+
+    const created = [
+      await create("post", `e2e-suche-post-${word}`, `Beitrag ${word}`, true),
+      await create("page", `e2e-suche-seite-${word}`, "Eine Seite", true),
+      await create("page", `e2e-suche-entwurf-${word}`, `Entwurf ${word}`, false),
+    ];
+    try {
+      const api = (await (
+        await fetch(`${API_BASE_URL}/public/search?q=${encodeURIComponent(word)}`)
+      ).json()) as { total: number; items: { slug: string; contentTypeId: string }[] };
+      expect(api.total).toBe(2);
+      expect(api.items[0]).toMatchObject({ contentTypeId: "post" }); // Titeltreffer zuerst
+      expect(api.items.some((item) => item.slug.includes("entwurf"))).toBe(false);
+
+      const html = await fetch(`${WEB_BASE_URL}/suche?q=${encodeURIComponent(word)}`).then(
+        (response) => response.text(),
+      );
+      expect(html).toContain(`/blog/e2e-suche-post-${word}`);
+      expect(html).toContain(`/e2e-suche-seite-${word}`);
+      expect(html).not.toContain("e2e-suche-entwurf");
+
+      // Eingaben werden maskiert: Anführungszeichen werden in Attributen escaped
+      // (kein Ausbruch), im Text auch < und >. "<" innerhalb eines in Anführungszeichen
+      // stehenden Attributwerts ist harmlos, ein Ausbruch über `">` wäre es nicht.
+      const payload = '"><script>alert(1)</script>';
+      const evil = await fetch(`${WEB_BASE_URL}/suche?q=${encodeURIComponent(payload)}`).then(
+        (response) => response.text(),
+      );
+      expect(evil).not.toContain(payload);
+      expect(evil).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+
+      const tooShort = (await (await fetch(`${API_BASE_URL}/public/search?q=a`)).json()) as {
+        total: number;
+      };
+      expect(tooShort.total).toBe(0);
+    } finally {
+      for (const item of created) {
+        await fetch(`${API_BASE_URL}/content/${item.type}/${item.id}`, {
+          method: "DELETE",
+          headers: { Cookie: cookie },
+        });
+      }
+    }
+  });
+});
