@@ -1,0 +1,47 @@
+---
+import type { BlockDocument } from "@presscraft/blocks";
+import { BlockDocumentRenderer } from "@presscraft/renderer";
+import Base from "../../layouts/Base.astro";
+import { apiBaseUrl, formatDate, type CategorySummary } from "../../lib/api";
+
+interface PublishedPost {
+  title: string;
+  publishedAt: string | null;
+  publishedBlockBody: BlockDocument | null;
+  categories: CategorySummary[];
+}
+
+const { slug } = Astro.params;
+const response = await fetch(`${apiBaseUrl}/public/content/post/${slug}`);
+if (!response.ok) {
+  Astro.response.status = 404;
+}
+const post: PublishedPost | null = response.ok ? await response.json() : null;
+---
+
+<Base title={post ? post.title : "Beitrag nicht gefunden"}>
+  {
+    post ? (
+      <article>
+        <h1>{post.title}</h1>
+        <p class="post-meta">
+          {formatDate(post.publishedAt)}
+          {post.categories.map((category) => (
+            <>
+              {" "}
+              <a class="category-chip" href={`/kategorie/${category.slug}`}>
+                {category.name}
+              </a>
+            </>
+          ))}
+        </p>
+        {post.publishedBlockBody && <BlockDocumentRenderer document={post.publishedBlockBody} />}
+        <p>
+          <a href="/blog">← Alle Beiträge</a>
+        </p>
+      </article>
+    ) : (
+      <p>Beitrag nicht gefunden. <a href="/blog">Zum Blog</a></p>
+    )
+  }
+</Base>

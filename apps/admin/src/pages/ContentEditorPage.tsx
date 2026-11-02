@@ -1,0 +1,216 @@
+import type { BlockDocument } from "@presscraft/blocks";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { api } from "../api/client";
+import type { Category, ContentItem } from "../api/types";
+import { BlockEditor } from "../editor/BlockEditor";
+
+const AUTOSAVE_DELAY_MS = 1000;
+// Dev-Default, passend zum Astro-Dev-Server aus Implementierungsschritt 6.
+const WEB_BASE_URL = import.meta.env.VITE_WEB_BASE_URL ?? "http://localhost:4321";
+
+function toBlockDocument(value: unknown): BlockDocument {
+  if (value && typeof value === "object" && Array.isArray((value as BlockDocument).blocks)) {
+    return value as BlockDocument;
+  }
+  return { schemaVersion: 1, blocks: [] };
+}
+
+/** Öffentliche Adresse eines veröffentlichten Items, je nach Typ. */
+function publicPath(typeId: string, slug: string): string {
+  return typeId === "post" ? `/blog/${slug}` : `/${slug}`;
+}
+
+/**
+ * Editor für alle Content-Typen. Beiträge ("post") haben zusätzlich Auszug
+ * und Kategorien (ADR 0008: typisierte Felder pro Typ).
+ */
+export function ContentEditorPage({
+  typeId,
+  id,
+  onBack,
+}: {
+  typeId: string;
+  id: string;
+  onBack: () => void;
+}) {
+  const isPost = typeId === "post";
+  const [item, setItem] = useState<ContentItem | null>(null);
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+  const [blockDocument, setBlockDocument] = useState<BlockDocument>({
+    schemaVersion: 1,
+    blocks: [],
+  });
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    api.getContent(typeId, id).then((loaded) => {
+      setItem(loaded);
+      setTitle(loaded.title);
+      setSlug(loaded.slug);
+      setExcerpt(typeof loaded.fieldValues.excerpt === "string" ? loaded.fieldValues.excerpt : "");
+      setBlockDocument(toBlockDocument(loaded.blockBody));
+      setSelectedCategoryIds((loaded.categories ?? []).map((category) => category.id));
+    });
+    if (isPost) {
+      api.listCategories().then(setAllCategories);
+    }
+  }, [typeId, id, isPost]);
+
+  const scheduleSave = useCallback(
+    (next: {
+      title: string;
+      slug: string;
+      excerpt: string;
+      blockDocument: BlockDocument;
+      fieldValues: Record<string, unknown>;
+    }) => {
+      setSaveState("saving");
+      if (saveTimeout.current) {
+        clearTimeout(saveTimeout.current);
+      }
+      saveTimeout.current = setTimeout(async () => {
+        const updated = await api.updateContent(typeId, id, {
+          title: next.title,
+          slug: next.slug,
+          blockBody: next.blockDocument,
+          // Bestehende Feldwerte erhalten, nur bekannte Felder überschreiben.
+          ...(isPost ? { fieldValues: { ...next.fieldValues, excerpt: next.excerpt } } : {}),
+        });
+        setItem((previous) => ({ ...updated, categories: previous?.categories }));
+        setSaveState("saved");
+      }, AUTOSAVE_DELAY_MS);
+    },
+    [typeId, id, isPost],
+  );
+
+  const current = { title, slug, excerpt, blockDocument, fieldValues: item?.fieldValues ?? {} };
+
+  function handleTitleChange(value: string) {
+    setTitle(value);
+    scheduleSave({ ...current, title: value });
+  }
+
+  function handleSlugChange(value: string) {
+    setSlug(value);
+    scheduleSave({ ...current, slug: value });
+  }
+
+  function handleExcerptChange(value: string) {
+    setExcerpt(value);
+    scheduleSave({ ...current, excerpt: value });
+  }
+
+  function handleBlockDocumentChange(next: BlockDocument) {
+    setBlockDocument(next);
+    scheduleSave({ ...current, blockDocument: next });
+  }
+
+  async function handleToggleCategory(categoryId: string) {
+    const next = selectedCategoryIds.includes(categoryId)
+      ? selectedCategoryIds.filter((existing) => existing !== categoryId)
+      : [...selectedCategoryIds, categoryId];
+    setSelectedCategoryIds(next);
+    await api.setContentCategories(typeId, id, next);
+  }
+
+  async function handlePublish() {
+    // Offene Änderungen zuerst speichern, sonst wird ein älterer Stand veröffentlicht.
+    if (saveTimeout.current) {
+      clearTimeout(saveTimeout.current);
+      saveTimeout.current = undefined;
+    }
+    await api.updateContent(typeId, id, {
+      title,
+      slug,
+      blockBody: blockDocument,
+      ...(isPost ? { fieldValues: { ...current.fieldValues, excerpt } } : {}),
+    });
+    const published = await api.publishContent(typeId, id);
+    setItem((previous) => ({ ...published, categories: previous?.categories }));
+    setSaveState("saved");
+  }
+
+  if (!item) {
+    return <p>Lädt …</p>;
+  }
+
+  return (
+    <main className="page-editor">
+      <header>
+        <button type="button" onClick={onBack}>
+          ← Zur Übersicht
+        </button>
+        <span className="save-state">
+          {saveState === "saving" ? "Speichert …" : saveState === "saved" ? "Gespeichert" : ""}
+        </span>
+      </header>
+
+      <label>
+        Titel
+        <input value={title} onChange={(event) => handleTitleChange(event.target.value)} />
+      </label>
+      <label>
+        Slug
+        <input value={slug} onChange={(event) => handleSlugChange(event.target.value)} />
+      </label>
+
+      {isPost && (
+        <>
+          <label>
+            Auszug (Kurztext für Übersichten)
+            <textarea
+              rows={3}
+              value={excerpt}
+              onChange={(event) => handleExcerptChange(event.target.value)}
+            />
+          </label>
+          <fieldset className="mb-3 rounded border border-slate-300 p-3">
+            <legend className="px-1 text-sm font-semibold">Kategorien</legend>
+            {allCategories.length === 0 ? (
+              <p className="m-0 text-sm text-slate-600">
+                Noch keine Kategorien — lege sie unter „Kategorien“ an.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                {allCategories.map((category) => (
+                  <label key={category.id} className="mb-0 flex items-center gap-2 font-normal">
+                    <input
+                      type="checkbox"
+                      className="m-0 w-auto"
+                      checked={selectedCategoryIds.includes(category.id)}
+                      onChange={() => void handleToggleCategory(category.id)}
+                    />
+                    {category.name}
+                  </label>
+                ))}
+              </div>
+            )}
+          </fieldset>
+        </>
+      )}
+
+      <BlockEditor blockDocument={blockDocument} onChange={handleBlockDocumentChange} />
+
+      <footer>
+        <button type="button" onClick={handlePublish}>
+          Veröffentlichen
+        </button>
+        <span>Status: {item.status}</span>
+        {item.status === "published" && (
+          <a
+            href={`${WEB_BASE_URL}${publicPath(typeId, item.slug)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Live ansehen
+          </a>
+        )}
+      </footer>
+    </main>
+  );
+}

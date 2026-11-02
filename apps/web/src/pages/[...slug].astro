@@ -1,6 +1,7 @@
 ---
 import type { BlockDocument } from "@presscraft/blocks";
 import { BlockDocumentRenderer } from "@presscraft/renderer";
+import Base from "../layouts/Base.astro";
 
 interface PublishedContentItem {
   title: string;
@@ -19,21 +20,15 @@ if (!response.ok) {
 const item: PublishedContentItem | null = response.ok ? await response.json() : null;
 ---
 
-<html lang="de">
-  <head>
-    <meta charset="utf-8" />
-    <title>{item ? item.title : "Seite nicht gefunden"}</title>
-  </head>
-  <body>
-    {
-      item ? (
-        <>
-          <h1>{item.title}</h1>
-          {item.publishedBlockBody && <BlockDocumentRenderer document={item.publishedBlockBody} />}
-        </>
-      ) : (
-        <p>Seite nicht gefunden.</p>
-      )
-    }
-  </body>
-</html>
+<Base title={item ? item.title : "Seite nicht gefunden"}>
+  {
+    item ? (
+      <>
+        <h1>{item.title}</h1>
+        {item.publishedBlockBody && <BlockDocumentRenderer document={item.publishedBlockBody} />}
+      </>
+    ) : (
+      <p>Seite nicht gefunden.</p>
+    )
+  }
+</Base>

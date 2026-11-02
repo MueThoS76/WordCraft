@@ -9,11 +9,14 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Req,
   UseGuards,
 } from "@nestjs/common";
 import {
   createContentItem,
+  getCategoriesForItems,
+  setItemCategories,
   deleteContentItem,
   getContentItem,
   listContentItems,
@@ -28,7 +31,11 @@ import { CAPABILITY_CONTENT_MANAGE } from "../auth/core-capabilities.js";
 import type { AuthenticatedRequest } from "../auth/session.guard.js";
 import { SessionGuard } from "../auth/session.guard.js";
 import { DATABASE_CONNECTION } from "../database/database.module.js";
-import { createContentItemSchema, updateContentItemSchema } from "./content-item.dto.js";
+import {
+  createContentItemSchema,
+  setCategoriesSchema,
+  updateContentItemSchema,
+} from "./content-item.dto.js";
 
 @Controller("content/:typeId")
 @UseGuards(SessionGuard, CapabilityGuard)
@@ -37,8 +44,13 @@ export class ContentItemsController {
   constructor(@Inject(DATABASE_CONNECTION) private readonly db: Database) {}
 
   @Get()
-  list(@Param("typeId") typeId: string) {
-    return listContentItems(this.db, typeId);
+  async list(@Param("typeId") typeId: string) {
+    const items = await listContentItems(this.db, typeId);
+    const categories = await getCategoriesForItems(
+      this.db,
+      items.map((item) => item.id),
+    );
+    return items.map((item) => ({ ...item, categories: categories.get(item.id) ?? [] }));
   }
 
   @Post()
@@ -61,7 +73,19 @@ export class ContentItemsController {
     if (!item) {
       throw new NotFoundException("Content-Item nicht gefunden.");
     }
-    return item;
+    const categories = await getCategoriesForItems(this.db, [item.id]);
+    return { ...item, categories: categories.get(item.id) ?? [] };
+  }
+
+  /** Ersetzt die Kategorien eines Items vollständig. */
+  @Put(":id/categories")
+  async setCategories(@Param("id") id: string, @Body() body: unknown) {
+    const { categoryIds } = this.parse(setCategoriesSchema, body);
+    const item = await getContentItem(this.db, id);
+    if (!item) {
+      throw new NotFoundException("Content-Item nicht gefunden.");
+    }
+    return { categories: await setItemCategories(this.db, id, categoryIds) };
   }
 
   @Patch(":id")

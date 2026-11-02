@@ -2,26 +2,40 @@ import { useEffect, useState, type FormEvent } from "react";
 import { api } from "../api/client";
 import type { ContentItem } from "../api/types";
 
-export function PagesListPage({ onOpen }: { onOpen: (id: string) => void }) {
-  const [pages, setPages] = useState<ContentItem[]>([]);
+/** Gemeinsame Übersicht für alle Content-Typen (Seiten, Beiträge, …). */
+export function ContentListPage({
+  typeId,
+  title,
+  singular,
+  showCategories,
+  onOpen,
+}: {
+  typeId: string;
+  title: string;
+  singular: string;
+  showCategories?: boolean;
+  onOpen: (id: string) => void;
+}) {
+  const [items, setItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [newSlug, setNewSlug] = useState("");
   const [newTitle, setNewTitle] = useState("");
 
   async function reload() {
-    setPages(await api.listPages());
+    setItems(await api.listContent(typeId));
   }
 
   useEffect(() => {
+    setLoading(true);
     reload().finally(() => setLoading(false));
-  }, []);
+  }, [typeId]);
 
   async function handleCreate(event: FormEvent) {
     event.preventDefault();
     if (!newSlug || !newTitle) {
       return;
     }
-    const created = await api.createPage({ slug: newSlug, title: newTitle });
+    const created = await api.createContent(typeId, { slug: newSlug, title: newTitle });
     setNewSlug("");
     setNewTitle("");
     await reload();
@@ -29,16 +43,16 @@ export function PagesListPage({ onOpen }: { onOpen: (id: string) => void }) {
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm("Seite wirklich löschen?")) {
+    if (!window.confirm(`${singular} wirklich löschen?`)) {
       return;
     }
-    await api.deletePage(id);
+    await api.deleteContent(typeId, id);
     await reload();
   }
 
   return (
     <main className="pages-list">
-      <h1>Seiten</h1>
+      <h1>{title}</h1>
 
       <form onSubmit={handleCreate} className="new-page-form">
         <input
@@ -51,33 +65,39 @@ export function PagesListPage({ onOpen }: { onOpen: (id: string) => void }) {
           value={newTitle}
           onChange={(event) => setNewTitle(event.target.value)}
         />
-        <button type="submit">Neue Seite</button>
+        <button type="submit">Neu: {singular}</button>
       </form>
 
       {loading ? (
         <p>Lädt …</p>
+      ) : items.length === 0 ? (
+        <p>Noch nichts vorhanden.</p>
       ) : (
         <table>
           <thead>
             <tr>
               <th>Titel</th>
               <th>Slug</th>
+              {showCategories && <th>Kategorien</th>}
               <th>Status</th>
               <th />
             </tr>
           </thead>
           <tbody>
-            {pages.map((page) => (
-              <tr key={page.id}>
+            {items.map((item) => (
+              <tr key={item.id}>
                 <td>
-                  <button type="button" className="link" onClick={() => onOpen(page.id)}>
-                    {page.title}
+                  <button type="button" className="link" onClick={() => onOpen(item.id)}>
+                    {item.title}
                   </button>
                 </td>
-                <td>{page.slug}</td>
-                <td>{page.status}</td>
+                <td>{item.slug}</td>
+                {showCategories && (
+                  <td>{(item.categories ?? []).map((category) => category.name).join(", ")}</td>
+                )}
+                <td>{item.status}</td>
                 <td>
-                  <button type="button" onClick={() => handleDelete(page.id)}>
+                  <button type="button" onClick={() => handleDelete(item.id)}>
                     Löschen
                   </button>
                 </td>

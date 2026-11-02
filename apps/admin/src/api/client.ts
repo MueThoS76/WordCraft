@@ -2,6 +2,8 @@ import type { BlockDocument } from "@presscraft/blocks";
 import type {
   AppUser,
   Capability,
+  Category,
+  CategorySummary,
   ContentItem,
   ContentType,
   Group,
@@ -84,29 +86,60 @@ export const api = {
     });
   },
 
-  listPages() {
-    return request<ContentItem[]>("/content/page");
+  listContent(typeId: string) {
+    return request<ContentItem[]>(`/content/${typeId}`);
   },
-  getPage(id: string) {
-    return request<ContentItem>(`/content/page/${id}`);
+  getContent(typeId: string, id: string) {
+    return request<ContentItem>(`/content/${typeId}/${id}`);
   },
-  createPage(input: { slug: string; title: string }) {
-    return request<ContentItem>("/content/page", {
+  createContent(typeId: string, input: { slug: string; title: string }) {
+    return request<ContentItem>(`/content/${typeId}`, {
       method: "POST",
       body: JSON.stringify(input),
     });
   },
-  updatePage(id: string, input: { title?: string; slug?: string; blockBody?: BlockDocument }) {
-    return request<ContentItem>(`/content/page/${id}`, {
+  updateContent(
+    typeId: string,
+    id: string,
+    input: {
+      title?: string;
+      slug?: string;
+      blockBody?: BlockDocument;
+      fieldValues?: Record<string, unknown>;
+    },
+  ) {
+    return request<ContentItem>(`/content/${typeId}/${id}`, {
       method: "PATCH",
       body: JSON.stringify(input),
     });
   },
-  publishPage(id: string) {
-    return request<ContentItem>(`/content/page/${id}/publish`, { method: "POST" });
+  publishContent(typeId: string, id: string) {
+    return request<ContentItem>(`/content/${typeId}/${id}/publish`, { method: "POST" });
   },
-  deletePage(id: string) {
-    return request<{ success: true }>(`/content/page/${id}`, { method: "DELETE" });
+  unpublishContent(typeId: string, id: string) {
+    return request<ContentItem>(`/content/${typeId}/${id}/unpublish`, { method: "POST" });
+  },
+  deleteContent(typeId: string, id: string) {
+    return request<{ success: true }>(`/content/${typeId}/${id}`, { method: "DELETE" });
+  },
+  setContentCategories(typeId: string, id: string, categoryIds: string[]) {
+    return request<{ categories: CategorySummary[] }>(`/content/${typeId}/${id}/categories`, {
+      method: "PUT",
+      body: JSON.stringify({ categoryIds }),
+    });
+  },
+
+  listCategories() {
+    return request<Category[]>("/categories");
+  },
+  createCategory(input: { name: string; slug?: string; description?: string }) {
+    return request<Category>("/categories", { method: "POST", body: JSON.stringify(input) });
+  },
+  updateCategory(id: string, input: { name?: string; slug?: string; description?: string }) {
+    return request<Category>(`/categories/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+  },
+  deleteCategory(id: string) {
+    return request<{ success: true }>(`/categories/${id}`, { method: "DELETE" });
   },
   listContentTypes() {
     return request<ContentType[]>("/content-types");

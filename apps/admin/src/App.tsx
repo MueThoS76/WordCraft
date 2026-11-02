@@ -3,26 +3,47 @@ import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-do
 import { api } from "./api/client";
 import { AdminLayout } from "./layout/AdminLayout";
 import { AccountPage } from "./pages/AccountPage";
+import { CategoriesPage } from "./pages/CategoriesPage";
+import { ContentEditorPage } from "./pages/ContentEditorPage";
+import { ContentListPage } from "./pages/ContentListPage";
 import { GroupDetailPage } from "./pages/GroupDetailPage";
 import { GroupsListPage } from "./pages/GroupsListPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MediaPage } from "./pages/MediaPage";
-import { PageEditorPage } from "./pages/PageEditorPage";
-import { PagesListPage } from "./pages/PagesListPage";
 import { UsersListPage } from "./pages/UsersListPage";
 
-function PagesListRoute() {
+function ContentListRoute({
+  typeId,
+  basePath,
+  title,
+  singular,
+  showCategories,
+}: {
+  typeId: string;
+  basePath: string;
+  title: string;
+  singular: string;
+  showCategories?: boolean;
+}) {
   const navigate = useNavigate();
-  return <PagesListPage onOpen={(id) => navigate(`/pages/${id}`)} />;
+  return (
+    <ContentListPage
+      typeId={typeId}
+      title={title}
+      singular={singular}
+      showCategories={showCategories}
+      onOpen={(id) => navigate(`${basePath}/${id}`)}
+    />
+  );
 }
 
-function PageEditorRoute() {
+function ContentEditorRoute({ typeId, basePath }: { typeId: string; basePath: string }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   if (!id) {
-    return <Navigate to="/pages" replace />;
+    return <Navigate to={basePath} replace />;
   }
-  return <PageEditorPage id={id} onBack={() => navigate("/pages")} />;
+  return <ContentEditorPage typeId={typeId} id={id} onBack={() => navigate(basePath)} />;
 }
 
 function GroupsListRoute() {
@@ -45,7 +66,7 @@ export function App() {
 
   useEffect(() => {
     api
-      .listPages()
+      .listContent("page")
       .then(() => setIsAuthenticated(true))
       .catch(() => setIsAuthenticated(false))
       .finally(() => setAuthChecked(true));
@@ -68,8 +89,27 @@ export function App() {
     <Routes>
       <Route element={<AdminLayout onLogout={handleLogout} />}>
         <Route index element={<Navigate to="/pages" replace />} />
-        <Route path="pages" element={<PagesListRoute />} />
-        <Route path="pages/:id" element={<PageEditorRoute />} />
+        <Route
+          path="pages"
+          element={
+            <ContentListRoute typeId="page" basePath="/pages" title="Seiten" singular="Seite" />
+          }
+        />
+        <Route path="pages/:id" element={<ContentEditorRoute typeId="page" basePath="/pages" />} />
+        <Route
+          path="posts"
+          element={
+            <ContentListRoute
+              typeId="post"
+              basePath="/posts"
+              title="Beiträge"
+              singular="Beitrag"
+              showCategories
+            />
+          }
+        />
+        <Route path="posts/:id" element={<ContentEditorRoute typeId="post" basePath="/posts" />} />
+        <Route path="categories" element={<CategoriesPage />} />
         <Route path="media" element={<MediaPage />} />
         <Route path="users" element={<UsersListPage />} />
         <Route path="groups" element={<GroupsListRoute />} />

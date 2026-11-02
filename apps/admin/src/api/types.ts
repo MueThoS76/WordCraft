@@ -20,6 +20,8 @@ export interface ContentItem {
   blockBody: BlockDocument | Record<string, never>;
   publishedBlockBody: BlockDocument | null;
   fieldValues: Record<string, unknown>;
+  /** Zugeordnete Kategorien (nur bei Content-Typen, die sie nutzen, nicht leer). */
+  categories?: CategorySummary[];
   authorId: string;
   publishedAt: string | null;
   createdAt: string;
@@ -79,4 +81,16 @@ export interface MediaItem {
   createdAt: string;
   /** Vollständige, öffentlich abrufbare URL der Datei. */
   url: string;
+}
+
+export interface CategorySummary {
+  id: string;
+  slug: string;
+  name: string;
+}
+
+export interface Category extends CategorySummary {
+  description: string;
+  /** Anzahl zugeordneter Items (nur in der Admin-Liste gefüllt). */
+  itemCount?: number;
 }

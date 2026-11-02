@@ -25,6 +25,8 @@ export const navigation: NavSection[] = [
     label: "Inhalt",
     items: [
       { key: "pages", label: "Seiten", to: "/pages", icon: "📄" },
+      { key: "posts", label: "Beiträge", to: "/posts", icon: "📝" },
+      { key: "categories", label: "Kategorien", to: "/categories", icon: "🏷️" },
       { key: "media", label: "Medien", to: "/media", icon: "🖼️" },
     ],
   },

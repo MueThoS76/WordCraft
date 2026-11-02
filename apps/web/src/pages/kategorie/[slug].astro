@@ -1,0 +1,29 @@
+---
+import PostListView from "../../components/PostListView.astro";
+import Base from "../../layouts/Base.astro";
+import { fetchCategories, fetchPosts, parsePage } from "../../lib/api";
+
+const { slug } = Astro.params;
+const page = parsePage(Astro.url.searchParams.get("seite"));
+const categories = await fetchCategories();
+const category = categories.find((entry) => entry.slug === slug);
+
+if (!category) {
+  Astro.response.status = 404;
+}
+const list = category ? await fetchPosts({ category: category.slug, page }) : { items: [], total: 0 };
+---
+
+<Base title={category ? `Kategorie: ${category.name}` : "Kategorie nicht gefunden"}>
+  {
+    category ? (
+      <>
+        <h1>Kategorie: {category.name}</h1>
+        {category.description && <p>{category.description}</p>}
+        <PostListView list={list} page={page} basePath={`/kategorie/${category.slug}`} />
+      </>
+    ) : (
+      <p>Kategorie nicht gefunden. <a href="/blog">Zum Blog</a></p>
+    )
+  }
+</Base>

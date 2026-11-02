@@ -20,6 +20,14 @@ export const PAGE_CONTENT_TYPE: ContentTypeDefinition = {
   fieldSchema: {},
 };
 
+export const POST_CONTENT_TYPE: ContentTypeDefinition = {
+  id: "post",
+  label: "Beitrag",
+  providedBy: "core",
+  // Typisierte Felder (ADR 0008). "excerpt" ist der Kurztext für Übersichten.
+  fieldSchema: { excerpt: { type: "text", label: "Auszug" } },
+};
+
 /** Idempotent: legt den Content-Typ an, falls er noch nicht existiert. */
 export async function ensureContentType(db: Database, definition: ContentTypeDefinition) {
   const existing = await db.select().from(contentTypes).where(eq(contentTypes.id, definition.id));

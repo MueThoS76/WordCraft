@@ -8,7 +8,7 @@ import {
   getUserByEmail,
   grantCapabilityToGroup,
 } from "@presscraft/auth";
-import { ensureContentType, PAGE_CONTENT_TYPE } from "@presscraft/content";
+import { ensureContentType, PAGE_CONTENT_TYPE, POST_CONTENT_TYPE } from "@presscraft/content";
 import type { Database } from "@presscraft/database";
 import { ADMIN_GROUP_NAME, CORE_CAPABILITIES } from "../auth/core-capabilities.js";
 import { DATABASE_CONNECTION } from "../database/database.module.js";
@@ -21,6 +21,7 @@ export class BootstrapService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     await ensureContentType(this.db, PAGE_CONTENT_TYPE);
+    await ensureContentType(this.db, POST_CONTENT_TYPE);
 
     for (const capability of CORE_CAPABILITIES) {
       await ensureCapability(this.db, capability);
@@ -33,7 +34,7 @@ export class BootstrapService implements OnModuleInit {
     await addUserToGroup(this.db, adminUser.id, adminGroup.id);
 
     this.logger.log(
-      "Bootstrap abgeschlossen (Content-Typ 'page', Core-Capabilities, Administratoren-Gruppe, Admin-Account).",
+      "Bootstrap abgeschlossen (Content-Typen 'page' und 'post', Core-Capabilities, Administratoren-Gruppe, Admin-Account).",
     );
   }
 

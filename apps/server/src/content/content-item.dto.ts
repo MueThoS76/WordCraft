@@ -16,3 +16,7 @@ export const updateContentItemSchema = z.object({
   fieldValues: z.record(z.unknown()).optional(),
 });
 export type UpdateContentItemDto = z.infer<typeof updateContentItemSchema>;
+
+export const setCategoriesSchema = z.object({
+  categoryIds: z.array(z.string().uuid()).max(100),
+});

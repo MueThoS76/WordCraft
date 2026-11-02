@@ -1,5 +1,5 @@
 import { Controller, Get, Inject, NotFoundException, Param } from "@nestjs/common";
-import { getPublishedContentItem } from "@presscraft/content";
+import { getCategoriesForItems, getPublishedContentItem } from "@presscraft/content";
 import type { Database } from "@presscraft/database";
 import { DATABASE_CONNECTION } from "../database/database.module.js";
 
@@ -17,6 +17,7 @@ export class PublicContentController {
     if (!item) {
       throw new NotFoundException("Seite nicht gefunden.");
     }
-    return item;
+    const categories = await getCategoriesForItems(this.db, [item.id]);
+    return { ...item, categories: categories.get(item.id) ?? [] };
   }
 }

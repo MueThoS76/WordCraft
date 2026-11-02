@@ -1,0 +1,49 @@
+---
+import { formatDate, POSTS_PER_PAGE, type PostList } from "../lib/api";
+
+interface Props {
+  list: PostList;
+  page: number;
+  /** Basis-Pfad für die Blätterfunktion, z. B. "/blog". */
+  basePath: string;
+}
+const { list, page, basePath } = Astro.props;
+const lastPage = Math.max(1, Math.ceil(list.total / POSTS_PER_PAGE));
+---
+
+{
+  list.items.length === 0 ? (
+    <p>Keine Beiträge gefunden.</p>
+  ) : (
+    <ul class="post-list">
+      {list.items.map((post) => (
+        <li>
+          <h2>
+            <a href={`/blog/${post.slug}`}>{post.title}</a>
+          </h2>
+          <p class="post-meta">
+            {formatDate(post.publishedAt)}
+            {post.categories.map((category) => (
+              <>
+                {" "}
+                <a class="category-chip" href={`/kategorie/${category.slug}`}>
+                  {category.name}
+                </a>
+              </>
+            ))}
+          </p>
+          {post.excerpt && <p>{post.excerpt}</p>}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+{
+  lastPage > 1 && (
+    <nav class="pager" aria-label="Seiten">
+      {page > 1 ? <a href={`${basePath}?seite=${page - 1}`}>← Neuere Beiträge</a> : <span />}
+      {page < lastPage ? <a href={`${basePath}?seite=${page + 1}`}>Ältere Beiträge →</a> : <span />}
+    </nav>
+  )
+}

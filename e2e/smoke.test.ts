@@ -312,3 +312,81 @@ describe("Medienbibliothek", () => {
     expect(listAnonymous.status).toBe(401);
   });
 });
+
+describe("Beiträge und Kategorien", () => {
+  it("Kategorie + Beitrag anlegen → veröffentlichen → in Blog, Kategorie und Detailseite sichtbar", async () => {
+    const login = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "admin@presscraft.local", password: "presscraft-dev" }),
+    });
+    const cookie = login.headers.get("set-cookie")!.split(";")[0];
+    const json = { "Content-Type": "application/json", Cookie: cookie };
+    const unique = Date.now();
+
+    const categoryResponse = await fetch(`${API_BASE_URL}/categories`, {
+      method: "POST",
+      headers: json,
+      body: JSON.stringify({ name: `E2E Kategorie ${unique}` }),
+    });
+    expect(categoryResponse.status).toBe(201);
+    const category = (await categoryResponse.json()) as { id: string; slug: string };
+
+    const postResponse = await fetch(`${API_BASE_URL}/content/post`, {
+      method: "POST",
+      headers: json,
+      body: JSON.stringify({ slug: `e2e-post-${unique}`, title: `E2E Beitrag ${unique}` }),
+    });
+    expect(postResponse.status).toBe(201);
+    const post = (await postResponse.json()) as { id: string; slug: string };
+
+    await fetch(`${API_BASE_URL}/content/post/${post.id}`, {
+      method: "PATCH",
+      headers: json,
+      body: JSON.stringify({ fieldValues: { excerpt: "E2E-Auszug" } }),
+    });
+    const assign = await fetch(`${API_BASE_URL}/content/post/${post.id}/categories`, {
+      method: "PUT",
+      headers: json,
+      body: JSON.stringify({ categoryIds: [category.id] }),
+    });
+    expect(assign.ok).toBe(true);
+
+    // Entwurf: weder in der öffentlichen Liste noch auf der Detailseite.
+    const draftList = (await (
+      await fetch(`${API_BASE_URL}/public/posts?category=${category.slug}`)
+    ).json()) as { total: number };
+    expect(draftList.total).toBe(0);
+
+    await fetch(`${API_BASE_URL}/content/post/${post.id}/publish`, {
+      method: "POST",
+      headers: { Cookie: cookie },
+    });
+
+    const list = (await (
+      await fetch(`${API_BASE_URL}/public/posts?category=${category.slug}`)
+    ).json()) as { total: number; items: { slug: string; excerpt: string }[] };
+    expect(list.total).toBe(1);
+    expect(list.items[0]).toMatchObject({ slug: post.slug, excerpt: "E2E-Auszug" });
+
+    const blogHtml = await fetch(`${WEB_BASE_URL}/blog`).then((response) => response.text());
+    expect(blogHtml).toContain(`E2E Beitrag ${unique}`);
+    const categoryHtml = await fetch(`${WEB_BASE_URL}/kategorie/${category.slug}`).then(
+      (response) => response.text(),
+    );
+    expect(categoryHtml).toContain(`E2E Beitrag ${unique}`);
+    const detailHtml = await fetch(`${WEB_BASE_URL}/blog/${post.slug}`).then((response) =>
+      response.text(),
+    );
+    expect(detailHtml).toContain(`E2E Kategorie ${unique}`);
+
+    await fetch(`${API_BASE_URL}/content/post/${post.id}`, {
+      method: "DELETE",
+      headers: { Cookie: cookie },
+    });
+    await fetch(`${API_BASE_URL}/categories/${category.id}`, {
+      method: "DELETE",
+      headers: { Cookie: cookie },
+    });
+  });
+});

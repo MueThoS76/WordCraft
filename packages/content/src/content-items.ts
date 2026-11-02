@@ -40,8 +40,8 @@ export async function getContentItem(db: Database, id: string) {
   return item;
 }
 
-export function listContentItems(db: Database, contentTypeId: string) {
-  return db.select().from(contentItems).where(eq(contentItems.contentTypeId, contentTypeId));
+export async function listContentItems(db: Database, contentTypeId: string) {
+  return await db.select().from(contentItems).where(eq(contentItems.contentTypeId, contentTypeId));
 }
 
 export interface UpdateContentItemInput {
