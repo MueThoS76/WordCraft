@@ -10,8 +10,8 @@ COPY . .
 
 RUN pnpm install --frozen-lockfile
 
-RUN pnpm --filter @presscraft/blocks build && \
-    pnpm --filter @presscraft/renderer build && \
+# Turbo baut zuerst alle Abhängigkeiten von apps/web in der richtigen Reihenfolge.
+RUN pnpm exec turbo run build --filter="@presscraft/web^..." && \
     pnpm --filter @presscraft/web build
 
 ENV HOST=0.0.0.0

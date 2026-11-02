@@ -21,10 +21,12 @@ ARG VITE_WEB_BASE_URL=http://localhost:4321
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 ENV VITE_WEB_BASE_URL=${VITE_WEB_BASE_URL}
 
-RUN pnpm --filter @presscraft/blocks build && \
-    pnpm --filter @presscraft/database build && \
-    pnpm --filter @presscraft/content build && \
-    pnpm --filter @presscraft/auth build && \
+# Turbo löst die Build-Reihenfolge anhand der Paket-Abhängigkeiten selbst auf
+# (`^...` = alle Abhängigkeiten, ohne das Paket selbst). So muss diese Datei
+# nicht angepasst werden, wenn ein Paket eine neue interne Abhängigkeit bekommt.
+# Admin und Server werden danach einzeln gebaut, weil der Admin mit
+# --base=/admin/ (build:selfhosted) statt dem Standard-Build laufen muss.
+RUN pnpm exec turbo run build --filter="@presscraft/server^..." --filter="@presscraft/admin^..." && \
     pnpm --filter @presscraft/admin build:selfhosted && \
     pnpm --filter @presscraft/server build
 
