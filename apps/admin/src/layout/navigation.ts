@@ -34,6 +34,7 @@ export const navigation: NavSection[] = [
       { key: "categories", label: "Kategorien", to: "/categories", icon: "🏷️" },
       { key: "media", label: "Medien", to: "/media", icon: "🖼️" },
       { key: "menu", label: "Menü", to: "/menu", icon: "🧭" },
+      { key: "design", label: "Design", to: "/design", icon: "🎨" },
     ],
   },
   {

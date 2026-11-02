@@ -17,6 +17,13 @@ export interface SiteSettings {
   homepage: string;
   navigation: NavigationItem[];
   footerText: string;
+  /**
+   * Design-Konfiguration (Schema in @presscraft/theme-sdk). Hier bewusst nur
+   * opak gespeichert, weil das content-Paket nicht vom theme-sdk abhängen
+   * darf (ADR 0012); validiert wird beim Schreiben im Server, beim Lesen im
+   * Frontend. null = Standard-Theme.
+   */
+  theme: Record<string, unknown> | null;
 }
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
@@ -28,6 +35,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     { label: "Blog", url: "/blog" },
   ],
   footerText: "",
+  theme: null,
 };
 
 export const SITE_SETTING_KEYS = Object.keys(DEFAULT_SITE_SETTINGS) as (keyof SiteSettings)[];
@@ -63,6 +71,11 @@ export async function updateSiteSettings(
   for (const key of SITE_SETTING_KEYS) {
     const value = changes[key];
     if (value === undefined) {
+      continue;
+    }
+    if (value === null) {
+      // null bedeutet "Standard": gespeicherten Wert entfernen.
+      await resetSiteSetting(db, key);
       continue;
     }
     await db

@@ -38,6 +38,9 @@ importers:
       '@presscraft/blocks':
         specifier: workspace:*
         version: link:../../packages/blocks
+      '@presscraft/theme-sdk':
+        specifier: workspace:^
+        version: link:../../packages/theme-sdk
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -105,6 +108,9 @@ importers:
       '@presscraft/media':
         specifier: workspace:^
         version: link:../../packages/media
+      '@presscraft/theme-sdk':
+        specifier: workspace:^
+        version: link:../../packages/theme-sdk
       fastify:
         specifier: 4.29.1
         version: 4.29.1
@@ -142,6 +148,9 @@ importers:
       '@presscraft/renderer':
         specifier: workspace:*
         version: link:../../packages/renderer
+      '@presscraft/theme-sdk':
+        specifier: workspace:^
+        version: link:../../packages/theme-sdk
       astro:
         specifier: ^4.15.9
         version: 4.16.19(@types/node@22.20.5)(lightningcss@1.32.0)(rollup@4.67.4)(typescript@5.9.3)
@@ -319,10 +328,20 @@ importers:
         version: 5.9.3
 
   packages/theme-sdk:
+    dependencies:
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
     devDependencies:
+      '@types/node':
+        specifier: ^22.5.0
+        version: 22.20.5
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.1
+        version: 2.1.9(@types/node@22.20.5)(lightningcss@1.32.0)
 
 packages:
 

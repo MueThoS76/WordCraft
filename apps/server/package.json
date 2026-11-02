@@ -22,6 +22,7 @@
     "@presscraft/content": "workspace:*",
     "@presscraft/database": "workspace:*",
     "@presscraft/media": "workspace:^",
+    "@presscraft/theme-sdk": "workspace:^",
     "fastify": "^4.28.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",

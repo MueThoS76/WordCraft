@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-do
 import { api } from "./api/client";
 import { AdminLayout } from "./layout/AdminLayout";
 import { AccountPage } from "./pages/AccountPage";
+import { DesignPage } from "./pages/DesignPage";
 import { MenuPage } from "./pages/MenuPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -115,6 +116,7 @@ export function App() {
         <Route path="posts/:id" element={<ContentEditorRoute typeId="post" basePath="/posts" />} />
         <Route path="categories" element={<CategoriesPage />} />
         <Route path="menu" element={<MenuPage />} />
+        <Route path="design" element={<DesignPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="media" element={<MediaPage />} />
         <Route path="users" element={<UsersListPage />} />

@@ -54,6 +54,13 @@ describe("site settings (integration)", () => {
     expect(again.homepage).toBe("willkommen");
   });
 
+  it("speichert ein Theme und setzt es mit null auf den Standard zurück", async () => {
+    await updateSiteSettings(db, { theme: { colors: { primary: "#112233" } } });
+    expect((await getSiteSettings(db)).theme).toEqual({ colors: { primary: "#112233" } });
+    await updateSiteSettings(db, { theme: null });
+    expect((await getSiteSettings(db)).theme).toBeNull();
+  });
+
   it("erlaubt nur sichere Link-Ziele", () => {
     expect(isSafeNavigationUrl("/blog")).toBe(true);
     expect(isSafeNavigationUrl("https://example.com/x")).toBe(true);

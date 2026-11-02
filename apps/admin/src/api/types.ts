@@ -138,4 +138,6 @@ export interface SiteSettings {
   homepage: string;
   navigation: NavigationItem[];
   footerText: string;
+  /** Rohdaten; mit parseTheme() aus @presscraft/theme-sdk lesen. null = Standard. */
+  theme: unknown;
 }

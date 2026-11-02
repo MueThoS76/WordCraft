@@ -74,6 +74,8 @@ export interface SiteSettings {
   homepage: string;
   navigation: NavigationItem[];
   footerText: string;
+  /** Rohdaten; vor der Nutzung mit parseTheme() aus @presscraft/theme-sdk prüfen. */
+  theme: unknown;
 }
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -85,6 +87,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     { label: "Blog", url: "/blog" },
   ],
   footerText: "",
+  theme: null,
 };
 
 /** Zweite Verteidigungslinie: nur relative Pfade und http(s)-Links ins Menü lassen. */

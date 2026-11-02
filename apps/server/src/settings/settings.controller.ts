@@ -9,6 +9,7 @@ import {
 } from "@nestjs/common";
 import { getSiteSettings, isSafeNavigationUrl, updateSiteSettings } from "@presscraft/content";
 import type { Database } from "@presscraft/database";
+import { themeConfigSchema } from "@presscraft/theme-sdk";
 import { z } from "zod";
 import { CapabilityGuard, RequireCapability } from "../auth/capability.guard.js";
 import { CAPABILITY_SETTINGS_MANAGE } from "../auth/core-capabilities.js";
@@ -37,6 +38,9 @@ const updateSettingsSchema = z
       .regex(/^[a-z0-9-]+$/i, "Ungültiger Slug."),
     navigation: z.array(navigationItemSchema).max(20),
     footerText: z.string().max(500),
+    // null = zurück zum Standard-Theme. Sonst streng validiert (nur Hex-Farben,
+    // Schrift aus fester Liste, Zahlen in Bereichen) — das Frontend gibt es als CSS aus.
+    theme: themeConfigSchema.nullable(),
   })
   .partial();
 

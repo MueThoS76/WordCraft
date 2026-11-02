@@ -73,7 +73,7 @@ export const api = {
   getSettings() {
     return request<SiteSettings>("/settings");
   },
-  updateSettings(input: Partial<SiteSettings>) {
+  updateSettings(input: Partial<Omit<SiteSettings, "theme">> & { theme?: unknown }) {
     return request<SiteSettings>("/settings", { method: "PATCH", body: JSON.stringify(input) });
   },
   dashboard() {

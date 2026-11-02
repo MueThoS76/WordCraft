@@ -49,7 +49,7 @@ Pakete dürfen nur **abwärts** in dieser Reihenfolge importieren, nie aufwärts
 6. `plugin-sdk` — `blocks`, `core`, `shared` (bewusst **nicht** `database`/`auth` direkt — Plugins bekommen nur Zugriff über vom Core bereitgestellte, capability-geprüfte Funktionen, nie rohen DB-Zugriff).
 7. `plugin-runtime` — `plugin-sdk`, `core`.
 8. `renderer`, `editor` — `blocks`, `theme-sdk`, `shared`.
-9. `apps/server` — `core`, `database`, `content`, `auth`, `media`, `plugin-runtime`, `plugin-sdk`, `blocks`.
+9. `apps/server` — `core`, `database`, `content`, `auth`, `media`, `plugin-runtime`, `plugin-sdk`, `blocks`, `theme-sdk` (nur zum Validieren der Theme-Konfiguration beim Speichern, siehe [0007](0007-theme-vs-plugin-abgrenzung.md); ergänzt am 2026-11-02).
 10. `apps/admin` — `editor`, `renderer` (für Live-Vorschau), `blocks`, `theme-sdk`, `shared`; spricht mit `apps/server` **ausschließlich über HTTP**, nie per direktem Import.
 11. `apps/web` — `renderer`, `blocks`, `theme-sdk`, `shared`; spricht mit `apps/server` ebenfalls nur über HTTP.
 

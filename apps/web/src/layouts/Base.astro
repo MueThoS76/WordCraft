@@ -1,14 +1,23 @@
 ---
+import { parseTheme, themeToCss } from "@presscraft/theme-sdk";
 import { fetchSettings } from "../lib/api";
 
 interface Props {
   title: string;
   /** Startseite: zeigt nur den Seitentitel statt "Titel – Seitentitel". */
   isHome?: boolean;
+  /** Meta-Beschreibung für Suchmaschinen und Link-Vorschauen. */
+  description?: string;
 }
-const { title, isHome = false } = Astro.props;
+const { title, isHome = false, description } = Astro.props;
 const settings = await fetchSettings();
+const theme = parseTheme(settings.theme);
+// themeToCss gibt nur validierte Werte aus (Hex-Farben, feste Schriftliste,
+// Zahlenbereiche) — kein Weg, beliebiges CSS einzuschleusen.
+const themeCss = themeToCss(theme);
 const pageTitle = isHome ? settings.siteTitle : `${title} – ${settings.siteTitle}`;
+const metaDescription = description || settings.tagline;
+const headerClass = theme.layout.headerStyle === "centered" ? "header-centered" : "";
 ---
 
 <html lang="de">
@@ -16,19 +25,35 @@ const pageTitle = isHome ? settings.siteTitle : `${title} – ${settings.siteTit
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pageTitle}</title>
+    {metaDescription && <meta name="description" content={metaDescription} />}
+    <meta property="og:title" content={pageTitle} />
+    {metaDescription && <meta property="og:description" content={metaDescription} />}
+    <meta property="og:site_name" content={settings.siteTitle} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={settings.siteTitle}
+      href="/feed.xml"
+    />
+    <style set:html={themeCss}></style>
     <style is:global>
       body {
         margin: 0;
-        font-family: system-ui, sans-serif;
-        line-height: 1.6;
-        color: #1a1a1a;
+        font-family: var(--pc-font);
+        font-size: var(--pc-font-size);
+        line-height: var(--pc-line-height);
+        color: var(--pc-text);
+        background: var(--pc-bg);
+      }
+      a {
+        color: var(--pc-primary);
       }
       .site-header {
-        border-bottom: 1px solid #e5e5e5;
+        border-bottom: 1px solid var(--pc-border);
       }
       .site-header nav,
       main.site-main {
-        max-width: 720px;
+        max-width: var(--pc-content-width);
         margin: 0 auto;
         padding: 1rem 1.25rem;
       }
@@ -38,61 +63,69 @@ const pageTitle = isHome ? settings.siteTitle : `${title} – ${settings.siteTit
         text-decoration: none;
         font-weight: 600;
       }
-      main.site-main img {
-        max-width: 100%;
-        height: auto;
+      .site-header.header-centered nav {
+        text-align: center;
+      }
+      .site-header.header-centered .site-tagline {
+        text-align: center;
       }
       .site-title {
         font-size: 1.15rem;
       }
       .site-tagline {
-        max-width: 720px;
+        max-width: var(--pc-content-width);
         margin: -0.5rem auto 0;
         padding: 0 1.25rem 0.75rem;
-        color: #666;
+        color: var(--pc-muted);
         font-size: 0.9rem;
       }
       .site-footer {
-        max-width: 720px;
+        max-width: var(--pc-content-width);
         margin: 2rem auto 0;
         padding: 1rem 1.25rem;
-        border-top: 1px solid #e5e5e5;
-        color: #666;
+        border-top: 1px solid var(--pc-border);
+        color: var(--pc-muted);
         font-size: 0.9rem;
+      }
+      main.site-main img {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--pc-radius);
       }
       blockquote {
         margin: 1.5rem 0;
         padding: 0.25rem 1rem;
-        border-left: 4px solid #c7d2fe;
-        color: #374151;
+        border-left: 4px solid var(--pc-primary);
+        background: var(--pc-surface);
+        border-radius: 0 var(--pc-radius) var(--pc-radius) 0;
       }
       blockquote footer {
-        color: #666;
+        color: var(--pc-muted);
         font-size: 0.9rem;
       }
       hr {
         border: 0;
-        border-top: 1px solid #e5e5e5;
+        border-top: 1px solid var(--pc-border);
         margin: 2rem 0;
       }
       .pc-button {
         display: inline-block;
         padding: 0.5rem 1.1rem;
-        border-radius: 6px;
-        border: 2px solid #4f46e5;
+        border-radius: var(--pc-radius);
+        border: 2px solid var(--pc-primary);
         text-decoration: none;
         font-weight: 600;
       }
       .pc-button-primary {
-        background: #4f46e5;
-        color: #fff;
+        background: var(--pc-primary);
+        color: var(--pc-bg);
       }
       .pc-button-outline {
         background: transparent;
-        color: #4f46e5;
+        color: var(--pc-primary);
       }
       .post-meta {
-        color: #666;
+        color: var(--pc-muted);
         font-size: 0.9rem;
       }
       .post-list {
@@ -114,8 +147,8 @@ const pageTitle = isHome ? settings.siteTitle : `${title} – ${settings.siteTit
         margin-right: 0.4rem;
         padding: 0 0.5rem;
         border-radius: 999px;
-        background: #eef2ff;
-        color: #3730a3;
+        background: var(--pc-surface);
+        color: var(--pc-primary);
         font-size: 0.8rem;
         text-decoration: none;
       }
@@ -126,7 +159,7 @@ const pageTitle = isHome ? settings.siteTitle : `${title} – ${settings.siteTit
     </style>
   </head>
   <body>
-    <header class="site-header">
+    <header class={`site-header ${headerClass}`}>
       <nav>
         <a class="site-title" href="/">{settings.siteTitle}</a>
         {settings.navigation.map((item) => <a href={item.url}>{item.label}</a>)}

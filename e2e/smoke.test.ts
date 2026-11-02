@@ -620,3 +620,58 @@ describe("Block-Validierung", () => {
     });
   });
 });
+
+describe("Design (Theme)", () => {
+  it("speichert ein gültiges Theme, wirkt im öffentlichen CSS, lehnt CSS-Injection ab und lässt sich zurücksetzen", async () => {
+    const login = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "admin@presscraft.local", password: "presscraft-dev" }),
+    });
+    const cookie = login.headers.get("set-cookie")!.split(";")[0];
+    const json = { "Content-Type": "application/json", Cookie: cookie };
+    const patch = (theme: unknown) =>
+      fetch(`${API_BASE_URL}/settings`, {
+        method: "PATCH",
+        headers: json,
+        body: JSON.stringify({ theme }),
+      });
+
+    const original = (
+      (await (await fetch(`${API_BASE_URL}/settings`, { headers: json })).json()) as {
+        theme: unknown;
+      }
+    ).theme;
+    const theme = {
+      colors: {
+        background: "#101010",
+        text: "#fafafa",
+        mutedText: "#aaaaaa",
+        primary: "#ff8800",
+        surface: "#202020",
+        border: "#333333",
+      },
+      typography: { fontFamily: "serif", baseFontSize: 18, lineHeight: 1.7 },
+      layout: { contentWidth: 640, radius: 10, headerStyle: "centered" },
+    };
+    try {
+      expect((await patch(theme)).status).toBe(200);
+      const html = await fetch(`${WEB_BASE_URL}/blog`).then((response) => response.text());
+      expect(html).toContain("--pc-primary:#ff8800");
+      expect(html).toContain("--pc-content-width:640px");
+      expect(html).toContain("header-centered");
+
+      const injected = structuredClone(theme);
+      injected.colors.primary = "red;} body{display:none";
+      expect((await patch(injected)).status).toBe(400);
+      const stillOk = await fetch(`${WEB_BASE_URL}/blog`).then((response) => response.text());
+      expect(stillOk).not.toContain("display:none");
+
+      expect((await patch(null)).status).toBe(200);
+      const reset = await fetch(`${WEB_BASE_URL}/blog`).then((response) => response.text());
+      expect(reset).toContain("--pc-primary:#4f46e5");
+    } finally {
+      await patch(original);
+    }
+  });
+});

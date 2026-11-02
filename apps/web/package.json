@@ -13,6 +13,7 @@
     "@astrojs/react": "^3.6.2",
     "@presscraft/blocks": "workspace:*",
     "@presscraft/renderer": "workspace:*",
+    "@presscraft/theme-sdk": "workspace:^",
     "astro": "^4.15.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
